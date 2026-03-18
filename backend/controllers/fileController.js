@@ -29,10 +29,9 @@ export const uploadFile = async (req, res) => {
     if (!org) return res.status(404).json({ message: 'Organization not found' });
 
     const role = getMemberRole(org, req.user._id);
-
     if (!role || !['admin', 'uploader'].includes(role)) {
       return res.status(403).json({
-        message: 'You do not have permission to upload files. Contact your admin.'
+        message: 'You do not have permission to upload files.'
       });
     }
 
@@ -40,17 +39,21 @@ export const uploadFile = async (req, res) => {
       return res.status(400).json({ message: 'No file provided' });
     }
 
-    // Parse allowedUsers sent from frontend
+    // Parse categories and individual users from form data
+    let sharedWithCategories = [];
     let allowedUsers = [];
-    if (req.body.allowedUsers) {
-      try {
-        allowedUsers = JSON.parse(req.body.allowedUsers);
-      } catch {
-        allowedUsers = [];
-      }
+
+    if (req.body.sharedWithCategories) {
+      try { sharedWithCategories = JSON.parse(req.body.sharedWithCategories); }
+      catch { sharedWithCategories = []; }
     }
 
-    // Uploader always has access to their own file
+    if (req.body.allowedUsers) {
+      try { allowedUsers = JSON.parse(req.body.allowedUsers); }
+      catch { allowedUsers = []; }
+    }
+
+    // Uploader always has access
     if (!allowedUsers.includes(req.user._id.toString())) {
       allowedUsers.push(req.user._id.toString());
     }
@@ -67,6 +70,7 @@ export const uploadFile = async (req, res) => {
       size: req.file.size,
       organization: org._id,
       uploadedBy: req.user._id,
+      sharedWithCategories,
       allowedUsers
     });
 
@@ -95,23 +99,37 @@ export const getFilesByOrg = async (req, res) => {
     const role = getMemberRole(org, req.user._id);
     if (!role) return res.status(403).json({ message: 'Access denied' });
 
-    let files;
-
     if (role === 'admin') {
       // Admin sees ALL files
-      files = await File.find({ organization: org._id })
+      const files = await File.find({ organization: org._id })
         .populate('uploadedBy', 'name email')
+        .populate('sharedWithCategories', 'name')
         .populate('allowedUsers', 'name email')
-        .select('originalName mimeType size uploadedBy allowedUsers createdAt');
-    } else {
-      // Members and uploaders only see files they have access to
-      files = await File.find({
-        organization: org._id,
-        allowedUsers: req.user._id
-      })
-        .populate('uploadedBy', 'name email')
-        .select('originalName mimeType size uploadedBy createdAt');
+        .select('originalName mimeType size uploadedBy sharedWithCategories allowedUsers createdAt');
+      return res.status(200).json({ files });
     }
+
+    // Find categories this user belongs to
+    const Category = (await import('../models/Category.js')).default;
+    const userCategories = await Category.find({
+      organization: org._id,
+      members: req.user._id
+    });
+
+    const categoryIds = userCategories.map(c => c._id);
+
+    // Files accessible if:
+    // 1. User is in allowedUsers directly
+    // 2. User belongs to a category the file is shared with
+    const files = await File.find({
+      organization: org._id,
+      $or: [
+        { allowedUsers: req.user._id },
+        { sharedWithCategories: { $in: categoryIds } }
+      ]
+    })
+      .populate('uploadedBy', 'name email')
+      .select('originalName mimeType size uploadedBy createdAt');
 
     res.status(200).json({ files });
 
@@ -121,6 +139,7 @@ export const getFilesByOrg = async (req, res) => {
 };
 
 // @route  GET /api/files/download/:fileId
+// @route GET /api/files/download/:fileId
 export const downloadFile = async (req, res) => {
   try {
     const file = await File.findById(req.params.fileId);
@@ -129,11 +148,37 @@ export const downloadFile = async (req, res) => {
     const org = await Organization.findById(file.organization);
     const role = getMemberRole(org, req.user._id);
 
-    const canAccess =
-      role === 'admin' ||
-      file.allowedUsers.some((u) => u.toString() === req.user._id.toString());
+    // Admin always has access
+    if (role === 'admin') {
+      const filePath = path.join(uploadDir, file.storedName);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found on server' });
+      }
+      const decryptedBuffer = decryptFile(fs.readFileSync(filePath));
+      file.accessLog.push({ user: req.user._id });
+      await file.save();
+      res.setHeader('Content-Disposition', `attachment; filename="${file.originalName}"`);
+      res.setHeader('Content-Type', file.mimeType);
+      return res.send(decryptedBuffer);
+    }
 
-    if (!canAccess) {
+    // Check direct access
+    const hasDirectAccess = file.allowedUsers.some(
+      (u) => u.toString() === req.user._id.toString()
+    );
+
+    // Check category access
+    const Category = (await import('../models/Category.js')).default;
+    const userCategories = await Category.find({
+      organization: org._id,
+      members: req.user._id
+    });
+    const categoryIds = userCategories.map(c => c._id.toString());
+    const hasCategoryAccess = file.sharedWithCategories.some(
+      (c) => categoryIds.includes(c.toString())
+    );
+
+    if (!hasDirectAccess && !hasCategoryAccess) {
       return res.status(403).json({ message: 'You do not have access to this file' });
     }
 
