@@ -29,9 +29,11 @@ export const uploadFile = async (req, res) => {
     if (!org) return res.status(404).json({ message: 'Organization not found' });
 
     const role = getMemberRole(org, req.user._id);
-    if (!role || !['admin', 'uploader'].includes(role)) {
+
+    // Allow upload if: admin/uploader role OR org allows all uploads
+    if (!role || (!['admin', 'uploader'].includes(role) && !org.allowAllUploads)) {
       return res.status(403).json({
-        message: 'You do not have permission to upload files.'
+        message: 'You do not have permission to upload files. Contact your admin.'
       });
     }
 
@@ -39,7 +41,6 @@ export const uploadFile = async (req, res) => {
       return res.status(400).json({ message: 'No file provided' });
     }
 
-    // Parse categories and individual users from form data
     let sharedWithCategories = [];
     let allowedUsers = [];
 
@@ -53,7 +54,6 @@ export const uploadFile = async (req, res) => {
       catch { allowedUsers = []; }
     }
 
-    // Uploader always has access
     if (!allowedUsers.includes(req.user._id.toString())) {
       allowedUsers.push(req.user._id.toString());
     }
@@ -318,6 +318,42 @@ export const getAccessLogs = async (req, res) => {
     }
 
     res.status(200).json({ accessLog: file.accessLog });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @route PUT /api/files/access/:fileId
+export const updateFileAccess = async (req, res) => {
+  try {
+    const { sharedWithCategories, allowedUsers } = req.body;
+
+    const file = await File.findById(req.params.fileId);
+    if (!file) return res.status(404).json({ message: 'File not found' });
+
+    const org = await Organization.findById(file.organization);
+    const role = getMemberRole(org, req.user._id);
+
+    const canManage =
+      role === 'admin' ||
+      file.uploadedBy.toString() === req.user._id.toString();
+
+    if (!canManage) {
+      return res.status(403).json({ message: 'Only admin or uploader can edit access' });
+    }
+
+    // Uploader must always keep access
+    const uploaderId = file.uploadedBy.toString();
+    if (!allowedUsers.includes(uploaderId)) {
+      allowedUsers.push(uploaderId);
+    }
+
+    file.sharedWithCategories = sharedWithCategories;
+    file.allowedUsers = allowedUsers;
+    await file.save();
+
+    res.status(200).json({ message: 'Access updated successfully' });
 
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -1,14 +1,21 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useEffect } from 'react';
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+ const handleLogout = () => {
+  console.log('logout called, token before:', token);
+  logout();
+  console.log('logout done');
+};
+
+useEffect(() => {
+  console.log('token changed:', token);
+  if (!token) navigate('/');
+}, [token, navigate]);
 
   return (
     <nav className="bg-gray-900 border-b border-gray-800 px-6 py-4">

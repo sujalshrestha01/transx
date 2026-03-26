@@ -5,7 +5,9 @@ import {
   getMyOrganizations,
   getOrgMembers,
   updateMemberRole,
-  removeMember
+  removeMember,
+  toggleUploadAccess,
+  bulkUpdateRole
 } from '../controllers/orgController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
@@ -16,6 +18,8 @@ router.post('/join', protect, joinOrganization);
 router.get('/my', protect, getMyOrganizations);
 router.get('/:orgId/members', protect, getOrgMembers);
 router.put('/:orgId/role', protect, updateMemberRole);
+router.put('/:orgId/bulk-role', protect, bulkUpdateRole);
+router.put('/:orgId/upload-access', protect, toggleUploadAccess);
 router.delete('/:orgId/remove/:userId', protect, removeMember);
 
 export default router;

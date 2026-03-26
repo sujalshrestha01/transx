@@ -30,7 +30,11 @@ const organizationSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  members: [memberSchema]
+  members: [memberSchema],
+  allowAllUploads: {
+    type: Boolean,
+    default: false  // when true, all members can upload regardless of role
+  }
 }, { timestamps: true });
 
 export default mongoose.model('Organization', organizationSchema);

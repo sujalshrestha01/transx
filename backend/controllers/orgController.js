@@ -172,3 +172,60 @@ export const removeMember = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @route PUT /api/org/:orgId/upload-access
+export const toggleUploadAccess = async (req, res) => {
+  try {
+    const org = await Organization.findById(req.params.orgId);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+    if (org.admin.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only admin can change this setting' });
+    }
+
+    org.allowAllUploads = req.body.allowAllUploads;
+    await org.save();
+
+    res.status(200).json({
+      message: `Upload access ${req.body.allowAllUploads ? 'enabled' : 'disabled'} for all members`,
+      allowAllUploads: org.allowAllUploads
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @route PUT /api/org/:orgId/bulk-role
+export const bulkUpdateRole = async (req, res) => {
+  try {
+    const { userIds, role } = req.body;
+
+    if (!['member', 'uploader', 'admin'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+
+    const org = await Organization.findById(req.params.orgId);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+    if (org.admin.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only admin can change roles' });
+    }
+
+    org.members = org.members.map((m) => {
+      // Don't change admin's own role
+      if (m.user.toString() === req.user._id.toString()) return m;
+      if (userIds.includes(m.user.toString())) {
+        m.role = role;
+      }
+      return m;
+    });
+
+    await org.save();
+
+    res.status(200).json({ message: `Roles updated successfully` });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -6,7 +6,8 @@ import {
   deleteFile,
   getAccessLogs,
   grantAccess,
-  revokeAccess
+  revokeAccess,
+  updateFileAccess   
 } from '../controllers/fileController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
@@ -19,6 +20,7 @@ router.get('/logs/:fileId', protect, getAccessLogs);
 router.post('/access/:fileId', protect, grantAccess);
 router.delete('/access/:fileId', protect, revokeAccess);
 router.delete('/delete/:fileId', protect, deleteFile);
+router.put('/access/:fileId', protect, updateFileAccess);
 router.get('/org/:orgId', protect, getFilesByOrg);
 
 export default router;
