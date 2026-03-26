@@ -1,5 +1,15 @@
 import Organization from '../models/Organization.js';
 
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+import File from '../models/File.js';
+import Category from '../models/Category.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // @route  POST /api/org/create
 export const createOrganization = async (req, res) => {
   try {
@@ -224,6 +234,39 @@ export const bulkUpdateRole = async (req, res) => {
     await org.save();
 
     res.status(200).json({ message: `Roles updated successfully` });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// @route DELETE /api/org/:orgId
+export const deleteOrganization = async (req, res) => {
+  try {
+    const org = await Organization.findById(req.params.orgId);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+    // Only admin can delete
+    if (org.admin.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only admin can delete this organization' });
+    }
+
+    // Delete all files in the org from disk
+    const files = await File.find({ organization: org._id });
+    files.forEach((file) => {
+      const filePath = path.join('uploads', file.storedName);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    });
+
+    // Delete all files from DB
+    await File.deleteMany({ organization: org._id });
+
+    // Delete all categories
+    await Category.deleteMany({ organization: org._id });
+
+    // Delete org
+    await org.deleteOne();
+
+    res.status(200).json({ message: 'Organization deleted successfully' });
 
   } catch (error) {
     res.status(500).json({ message: error.message });

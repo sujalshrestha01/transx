@@ -316,6 +316,20 @@ const Organization = () => {
     setSelectedMembers(allIds);
   };
 
+  const handleDeleteOrg = async () => {
+  if (!confirm(`Are you sure you want to delete "${org.name}"? This will permanently delete all files and categories. This cannot be undone.`)) return;
+
+  // Second confirmation for safety
+  if (!confirm('This is irreversible. Are you absolutely sure?')) return;
+
+  try {
+    await axios.delete(`/org/${orgId}`);
+    navigate('/dashboard');
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to delete organization');
+  }
+};
+
   // ── HELPERS ──
   const isAdminUser = myRole === "admin";
   const canUpload = ["admin", "uploader"].includes(myRole) || allowAllUploads;
@@ -579,6 +593,7 @@ const Organization = () => {
             onDeselectAll={() => setSelectedMembers([])}
             onToggleMember={toggleMemberSelection}
             onBulkRoleChange={setBulkRole}
+            onDeleteOrg={handleDeleteOrg}
           />
         )}
       </div>
