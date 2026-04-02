@@ -359,3 +359,95 @@ export const updateFileAccess = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @route GET /api/files/recent/:orgId
+export const getRecentDownloads = async (req, res) => {
+  try {
+    const org = await Organization.findById(req.params.orgId);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+    const role = getMemberRole(org, req.user._id);
+    if (!role) return res.status(403).json({ message: 'Access denied' });
+
+    // Find files this user has downloaded (in accessLog)
+    const files = await File.find({
+      organization: req.params.orgId,
+      'accessLog.user': req.user._id
+    })
+      .populate('uploadedBy', 'name email')
+      .select('originalName mimeType size uploadedBy accessLog createdAt');
+
+    // Sort by most recent access and take top 10
+    const withLastAccess = files.map((file) => {
+      const userLogs = file.accessLog
+        .filter(log => log.user.toString() === req.user._id.toString())
+        .sort((a, b) => new Date(b.accessedAt) - new Date(a.accessedAt));
+      return {
+        _id: file._id,
+        originalName: file.originalName,
+        mimeType: file.mimeType,
+        size: file.size,
+        uploadedBy: file.uploadedBy,
+        lastDownloadedAt: userLogs[0]?.accessedAt
+      };
+    });
+
+    const sorted = withLastAccess
+      .sort((a, b) => new Date(b.lastDownloadedAt) - new Date(a.lastDownloadedAt))
+      .slice(0, 10);
+
+    res.status(200).json({ files: sorted });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @route GET /api/files/activity/:orgId
+export const getActivityLog = async (req, res) => {
+  try {
+    const org = await Organization.findById(req.params.orgId);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+    const role = getMemberRole(org, req.user._id);
+    if (role !== 'admin') {
+      return res.status(403).json({ message: 'Only admin can view activity log' });
+    }
+
+    const files = await File.find({ organization: req.params.orgId })
+      .populate('accessLog.user', 'name email')
+      .populate('uploadedBy', 'name email')
+      .select('originalName mimeType uploadedBy accessLog createdAt');
+
+    // Flatten all access logs into one list
+    const activity = [];
+
+    files.forEach((file) => {
+      // Upload event
+      activity.push({
+        type: 'upload',
+        file: { _id: file._id, name: file.originalName, mimeType: file.mimeType },
+        user: file.uploadedBy,
+        at: file.createdAt
+      });
+
+      // Download events
+      file.accessLog.forEach((log) => {
+        activity.push({
+          type: 'download',
+          file: { _id: file._id, name: file.originalName, mimeType: file.mimeType },
+          user: log.user,
+          at: log.accessedAt
+        });
+      });
+    });
+
+    // Sort by most recent
+    activity.sort((a, b) => new Date(b.at) - new Date(a.at));
+
+    res.status(200).json({ activity: activity.slice(0, 50) });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
