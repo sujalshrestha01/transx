@@ -7,13 +7,13 @@ const Navbar = () => {
   const navigate = useNavigate();
 
  const handleLogout = () => {
-  console.log('logout called, token before:', token);
+  // console.log('logout called, token before:', token);
   logout();
-  console.log('logout done');
+  // console.log('logout done');
 };
 
 useEffect(() => {
-  console.log('token changed:', token);
+  // console.log('token changed:', token);
   if (!token) navigate('/');
 }, [token, navigate]);
 

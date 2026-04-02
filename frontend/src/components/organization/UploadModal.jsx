@@ -1,4 +1,5 @@
 const UploadModal = ({
+  show,
   selectedFile,
   categories,
   members,
@@ -12,6 +13,9 @@ const UploadModal = ({
   onUpload,
   onClose,
 }) => {
+
+  if (!show || !selectedFile) return null; 
+
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
       <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">

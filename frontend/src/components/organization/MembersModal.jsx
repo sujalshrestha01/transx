@@ -1,34 +1,28 @@
-const MembersModal = ({
-  selectedCategory,
-  members,
-  categoryMembers,
-  onToggleMember,
-  onSave,
-  onClose,
-}) => {
+const MembersModal = ({ show, category, members, categoryMembers, onToggle, onSave, onClose }) => {
+  if (!show || !category) return null;
+
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
       <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-2xl">
         <h3 className="text-white font-semibold text-lg mb-1">Manage Members</h3>
         <p className="text-gray-500 text-sm mb-5">
-          Category: <span className="text-blue-400">{selectedCategory.name}</span>
+          Category: <span className="text-blue-400">{category.name}</span>
         </p>
 
         <div className="space-y-2 max-h-72 overflow-y-auto mb-5">
-          {members.map((member) => {
+          {members?.map((member) => {
             const memberId = member.user._id;
-            const isSelected =
-              categoryMembers.includes(memberId) ||
+            const isSelected = categoryMembers.includes(memberId) ||
               categoryMembers.includes(memberId?.toString());
 
             return (
               <div
                 key={memberId}
-                onClick={() => onToggleMember(memberId)}
+                onClick={() => onToggle(memberId)}
                 className={`flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition
                   ${isSelected
-                    ? "bg-blue-600/20 border border-blue-500"
-                    : "bg-gray-800 border border-transparent hover:border-gray-600"
+                    ? 'bg-blue-600/20 border border-blue-500'
+                    : 'bg-gray-800 border border-transparent hover:border-gray-600'
                   }`}
               >
                 <div className="flex items-center gap-3">
@@ -40,9 +34,8 @@ const MembersModal = ({
                     <p className="text-gray-500 text-xs">{member.user?.email}</p>
                   </div>
                 </div>
-                <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0
-                    ${isSelected ? "bg-blue-500 border-blue-500" : "border-gray-600"}`}
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0
+                  ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}
                 >
                   {isSelected && (
                     <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -56,14 +49,11 @@ const MembersModal = ({
         </div>
 
         <p className="text-gray-600 text-xs mb-4">
-          {categoryMembers.length} member{categoryMembers.length !== 1 ? "s" : ""} selected
+          {categoryMembers.length} member{categoryMembers.length !== 1 ? 's' : ''} selected
         </p>
 
         <div className="flex gap-3 justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-400 hover:text-white transition"
-          >
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition">
             Cancel
           </button>
           <button
