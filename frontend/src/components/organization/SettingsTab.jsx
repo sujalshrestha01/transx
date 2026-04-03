@@ -35,7 +35,7 @@ const SettingsTab = ({
           </div>
           <button
             onClick={() => onToggleUploadAccess(!allowAllUploads)}
-            className={`relative w-12 h-6 rounded-full transition-colors duration-200 flex-shrink-0
+            className={`relative w-12 h-6 rounded-full transition-colors duration-200 shrink-0
               ${allowAllUploads ? "bg-blue-600" : "bg-gray-700"}`}
           >
             <span
@@ -136,7 +136,7 @@ const SettingsTab = ({
                   {!isCurrentUser && (
                     <div
                       onClick={() => onToggleMember(member.user._id)}
-                      className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer flex-shrink-0
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer shrink-0
                         ${isSelected ? "bg-blue-500 border-blue-500" : "border-gray-600"}`}
                     >
                       {isSelected && (

@@ -34,7 +34,21 @@ const organizationSchema = new mongoose.Schema({
   allowAllUploads: {
     type: Boolean,
     default: false  // when true, all members can upload regardless of role
-  }
+  },
+   // ← NEW: dedicated activity log
+  activityLog: [
+    {
+      type: {
+        type: String,
+        enum: ['upload', 'download', 'join', 'delete', 'role_change'],
+        required: true
+      },
+      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      fileName: { type: String },
+      meta: { type: String },
+      at: { type: Date, default: Date.now }
+    }
+  ]
 }, { timestamps: true });
 
 export default mongoose.model('Organization', organizationSchema);

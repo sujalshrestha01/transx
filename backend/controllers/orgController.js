@@ -1,4 +1,6 @@
 import Organization from '../models/Organization.js';
+import { logActivity } from '../utils/activityLogger.js';
+import User from '../models/User.js';
 
 import fs from 'fs';
 import path from 'path';
@@ -55,6 +57,10 @@ export const joinOrganization = async (req, res) => {
     // New members get 'member' role by default
     org.members.push({ user: req.user._id, role: 'member' });
     await org.save();
+
+    // Log join activity
+    await logActivity(org._id, 'join', req.user._id);
+
 
     res.status(200).json({
       message: `Joined "${org.name}" successfully`,
@@ -146,6 +152,14 @@ export const updateMemberRole = async (req, res) => {
     }
 
     await org.save();
+
+    // Log role change
+// Find the member's name first
+const changedMember = await User.findById(userId).select('name');
+
+await logActivity(req.params.orgId, 'role_change', req.user._id, {
+  meta: `Changed ${changedMember?.name || 'Unknown'}'s role to ${role}`
+});
 
     res.status(200).json({ message: `Role updated to "${role}" successfully` });
 

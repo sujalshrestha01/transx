@@ -58,7 +58,7 @@ const UploadModal = ({
                       <p className="text-gray-500 text-xs">{cat.members.length} members</p>
                     </div>
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0
                         ${isSelected ? "bg-purple-500 border-purple-500" : "border-gray-600"}`}
                     >
                       {isSelected && (
@@ -113,7 +113,7 @@ const UploadModal = ({
                     </div>
                   </div>
                   <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0
                       ${isSelected ? "bg-blue-500 border-blue-500" : "border-gray-600"}`}
                   >
                     {isSelected && (

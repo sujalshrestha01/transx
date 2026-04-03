@@ -34,7 +34,7 @@ const MembersModal = ({ show, category, members, categoryMembers, onToggle, onSa
                     <p className="text-gray-500 text-xs">{member.user?.email}</p>
                   </div>
                 </div>
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0
                   ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}
                 >
                   {isSelected && (
