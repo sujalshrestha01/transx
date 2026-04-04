@@ -367,6 +367,15 @@ const Organization = () => {
     }
   };
 
+const handleUpdateOrgName = async (newName) => {
+  try {
+    await axios.put(`/org/${orgId}`, { name: newName });
+    fetchAll();
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to update name');
+  }
+};
+
   const handleDeleteOrg = async () => {
     if (
       !confirm(
@@ -1063,6 +1072,7 @@ const Organization = () => {
                 onToggleMember={toggleMemberSelection}
                 onBulkRoleChange={setBulkRole}
                 onDeleteOrg={handleDeleteOrg}
+                onUpdateOrgName={handleUpdateOrgName}
               />
             )}
           </div>

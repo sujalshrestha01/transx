@@ -253,6 +253,33 @@ export const bulkUpdateRole = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @route PUT /api/org/:orgId
+export const updateOrganization = async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name?.trim()) {
+      return res.status(400).json({ message: 'Organization name is required' });
+    }
+
+    const org = await Organization.findById(req.params.orgId);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+    if (org.admin.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only admin can edit organization' });
+    }
+
+    org.name = name.trim();
+    await org.save();
+
+    res.status(200).json({ message: 'Organization updated successfully', org });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @route DELETE /api/org/:orgId
 export const deleteOrganization = async (req, res) => {
   try {

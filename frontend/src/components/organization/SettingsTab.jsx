@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 const SettingsTab = ({
   org,
   members,
@@ -18,8 +20,11 @@ const SettingsTab = ({
   onDeselectAll,
   onToggleMember,
   onBulkRoleChange,
-  onDeleteOrg
+  onUpdateOrgName,
+  onDeleteOrg,
 }) => {
+  const [editingName, setEditingName] = useState(false);
+  const [newOrgName, setNewOrgName] = useState(org?.name || "");
   return (
     <div className="space-y-4">
       {/* Upload Access Toggle */}
@@ -30,7 +35,8 @@ const SettingsTab = ({
               Allow All Members to Upload
             </h3>
             <p className="text-gray-500 text-sm mt-1">
-              When enabled, all members can upload and share files regardless of their role.
+              When enabled, all members can upload and share files regardless of
+              their role.
             </p>
           </div>
           <button
@@ -54,7 +60,9 @@ const SettingsTab = ({
       {/* Member Roles */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
         <h3 className="text-white font-semibold text-lg mb-1">Member Roles</h3>
-        <p className="text-gray-500 text-sm mb-5">Control what each member can do.</p>
+        <p className="text-gray-500 text-sm mb-5">
+          Control what each member can do.
+        </p>
 
         {roleSuccess && (
           <div className="bg-green-500/10 border border-green-500 text-green-400 px-4 py-2 rounded-lg mb-5 text-sm">
@@ -69,8 +77,13 @@ const SettingsTab = ({
             { role: "uploader", desc: "Can upload and share files" },
             { role: "admin", desc: "Full access and control" },
           ].map(({ role, desc }) => (
-            <div key={role} className="flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg">
-              <span className={`text-xs px-2 py-0.5 rounded-full capitalize font-medium ${getRoleBadge(role)}`}>
+            <div
+              key={role}
+              className="flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg"
+            >
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full capitalize font-medium ${getRoleBadge(role)}`}
+              >
                 {role}
               </span>
               <span className="text-gray-400 text-xs">{desc}</span>
@@ -118,7 +131,8 @@ const SettingsTab = ({
         {/* Member List */}
         <div className="space-y-3">
           {members.map((member) => {
-            const isCurrentUser = member.user._id.toString() === currentUserId?.toString();
+            const isCurrentUser =
+              member.user._id.toString() === currentUserId?.toString();
             const isSelected =
               selectedMembers.includes(member.user._id) ||
               selectedMembers.includes(member.user._id?.toString());
@@ -127,9 +141,10 @@ const SettingsTab = ({
               <div
                 key={member._id}
                 className={`flex items-center justify-between rounded-xl px-4 py-3 transition
-                  ${isSelected
-                    ? "bg-blue-600/10 border border-blue-500/50"
-                    : "bg-gray-800 border border-transparent"
+                  ${
+                    isSelected
+                      ? "bg-blue-600/10 border border-blue-500/50"
+                      : "bg-gray-800 border border-transparent"
                   }`}
               >
                 <div className="flex items-center gap-3">
@@ -140,8 +155,18 @@ const SettingsTab = ({
                         ${isSelected ? "bg-blue-500 border-blue-500" : "border-gray-600"}`}
                     >
                       {isSelected && (
-                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-2.5 h-2.5 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                       )}
                     </div>
@@ -152,21 +177,29 @@ const SettingsTab = ({
                   <div>
                     <p className="text-white text-sm font-medium">
                       {member.user?.name}
-                      {isCurrentUser && <span className="text-gray-500 ml-1">(you)</span>}
+                      {isCurrentUser && (
+                        <span className="text-gray-500 ml-1">(you)</span>
+                      )}
                     </p>
-                    <p className="text-gray-500 text-xs">{member.user?.email}</p>
+                    <p className="text-gray-500 text-xs">
+                      {member.user?.email}
+                    </p>
                   </div>
                 </div>
 
                 {isCurrentUser ? (
-                  <span className={`text-xs px-3 py-1 rounded-full capitalize font-medium ${getRoleBadge(member.role)}`}>
+                  <span
+                    className={`text-xs px-3 py-1 rounded-full capitalize font-medium ${getRoleBadge(member.role)}`}
+                  >
                     {member.role}
                   </span>
                 ) : (
                   <div className="flex items-center gap-2">
                     <select
                       value={member.role}
-                      onChange={(e) => onRoleChange(member.user._id, e.target.value)}
+                      onChange={(e) =>
+                        onRoleChange(member.user._id, e.target.value)
+                      }
                       disabled={updatingRole === member.user._id}
                       className="bg-gray-700 text-white text-xs rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
                     >
@@ -189,19 +222,73 @@ const SettingsTab = ({
       </div>
 
       {/* Org Info */}
+      {/* Org Info */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-        <h3 className="text-white font-semibold text-lg mb-4">Organization Info</h3>
+        <h3 className="text-white font-semibold text-lg mb-4">
+          Organization Info
+        </h3>
         <div className="space-y-3">
+          {/* Editable Name */}
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-500">Name</span>
+            {editingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newOrgName}
+                  onChange={(e) => setNewOrgName(e.target.value)}
+                  className="bg-gray-800 text-white text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-500 w-40"
+                  autoFocus
+                />
+                <button
+                  onClick={() => {
+                    onUpdateOrgName(newOrgName);
+                    setEditingName(false);
+                  }}
+                  className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingName(false);
+                    setNewOrgName(org?.name);
+                  }}
+                  className="text-xs text-gray-400 hover:text-white transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-white font-medium">{org?.name}</span>
+                <button
+                  onClick={() => setEditingName(true)}
+                  className="cursor-pointer text-xs text-gray-600 hover:text-blue-400 transition"
+                >
+                  ✏️
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Rest of org info */}
           {[
-            { label: "Name", value: org?.name },
-            { label: "Join Code", value: org?.joinCode, mono: true, blue: true },
+            {
+              label: "Join Code",
+              value: org?.joinCode,
+              mono: true,
+              blue: true,
+            },
             { label: "Total Members", value: members.length },
             { label: "Total Files", value: files.length },
             { label: "Total Categories", value: categories.length },
           ].map(({ label, value, mono, blue }) => (
             <div key={label} className="flex justify-between text-sm">
               <span className="text-gray-500">{label}</span>
-              <span className={`font-medium ${blue ? "text-blue-400" : "text-white"} ${mono ? "font-mono" : ""}`}>
+              <span
+                className={`font-medium ${blue ? "text-blue-400" : "text-white"} ${mono ? "font-mono" : ""}`}
+              >
                 {value}
               </span>
             </div>
@@ -210,18 +297,19 @@ const SettingsTab = ({
       </div>
 
       {/* Danger Zone */}
-<div className="bg-gray-900 border border-red-900/50 rounded-2xl p-6">
-  <h3 className="text-red-400 font-semibold text-lg mb-1">Danger Zone</h3>
-  <p className="text-gray-500 text-sm mb-5">
-    Permanently delete this organization and all its files. This cannot be undone.
-  </p>
-  <button
-    onClick={onDeleteOrg}
-    className="px-5 py-2.5 text-sm bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg transition font-medium"
-  >
-    🗑️ Delete Organization
-  </button>
-</div>
+      <div className="bg-gray-900 border border-red-900/50 rounded-2xl p-6">
+        <h3 className="text-red-400 font-semibold text-lg mb-1">Danger Zone</h3>
+        <p className="text-gray-500 text-sm mb-5">
+          Permanently delete this organization and all its files. This cannot be
+          undone.
+        </p>
+        <button
+          onClick={onDeleteOrg}
+          className="px-5 py-2.5 text-sm bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg transition font-medium"
+        >
+          🗑️ Delete Organization
+        </button>
+      </div>
     </div>
   );
 };

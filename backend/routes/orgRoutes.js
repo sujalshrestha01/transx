@@ -3,6 +3,7 @@ import {
   createOrganization,
   joinOrganization,
   getMyOrganizations,
+  updateOrganization,
   deleteOrganization  ,
   getOrgMembers,
   updateMemberRole,
@@ -22,6 +23,7 @@ router.put('/:orgId/role', protect, updateMemberRole);
 router.put('/:orgId/bulk-role', protect, bulkUpdateRole);
 router.put('/:orgId/upload-access', protect, toggleUploadAccess);
 router.delete('/:orgId/remove/:userId', protect, removeMember);
+router.put('/:orgId', protect, updateOrganization);
 router.delete('/:orgId', protect, deleteOrganization);
 
 export default router;
