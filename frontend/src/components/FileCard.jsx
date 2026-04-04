@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import axios from '../api/axios';
 
-const FileCard = ({ file, currentUser, myRole, members, categories, onDownload, onDelete, onRefresh }) => {
+const FileCard = ({ 
+  file, 
+  currentUser, 
+  myRole, 
+  members, 
+  categories, 
+  onDownload, 
+  onDelete, 
+  onRefresh 
+}) => {
   const [showAccessModal, setShowAccessModal] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -105,8 +114,8 @@ const FileCard = ({ file, currentUser, myRole, members, categories, onDownload, 
     <>
       <div className="bg-gray-900 border border-gray-800 hover:border-gray-700 rounded-xl p-4 transition">
         <div className="flex items-center justify-between gap-4">
-
-          {/* Left */}
+          
+          {/* File Info Section */}
           <div className="flex items-center gap-3 min-w-0">
             <div className="text-2xl flex-shrink-0">{getFileIcon(file.mimeType)}</div>
             <div className="min-w-0">
@@ -114,7 +123,6 @@ const FileCard = ({ file, currentUser, myRole, members, categories, onDownload, 
               <p className="text-gray-500 text-xs mt-0.5">
                 {formatSize(file.size)} · Uploaded by {file.uploadedBy?.name}
               </p>
-              {/* Access summary — admin and uploader only */}
               {canEditAccess && (
                 <p className="text-gray-600 text-xs mt-0.5">
                   {getAccessSummary()}
@@ -123,7 +131,7 @@ const FileCard = ({ file, currentUser, myRole, members, categories, onDownload, 
             </div>
           </div>
 
-          {/* Right */}
+          {/* Action Buttons */}
           <div className="flex items-center gap-2 flex-shrink-0">
             {canEditAccess && (
               <button
@@ -155,7 +163,7 @@ const FileCard = ({ file, currentUser, myRole, members, categories, onDownload, 
       {showAccessModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
-
+            
             <h3 className="text-white font-semibold text-lg mb-1">Edit Access</h3>
             <p className="text-gray-500 text-sm mb-5">
               Who can view <span className="text-blue-400 font-medium">"{file.originalName}"</span>
@@ -167,7 +175,7 @@ const FileCard = ({ file, currentUser, myRole, members, categories, onDownload, 
               </div>
             )}
 
-            {/* Categories */}
+            {/* Categories Selection */}
             {categories?.length > 0 && (
               <div className="mb-5">
                 <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
@@ -208,12 +216,12 @@ const FileCard = ({ file, currentUser, myRole, members, categories, onDownload, 
               </div>
             )}
 
-            {/* Individual Members */}
+            {/* Individual Members Selection */}
             <div className="mb-5">
               <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
                 👤 Individual Members
               </p>
-              <div className="space-y-2 max-h-52 overflow-y-auto">
+              <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
                 {members?.map((member) => {
                   const memberId = member.user._id;
                   const isSelected = selectedUsers.includes(memberId) ||
@@ -239,7 +247,7 @@ const FileCard = ({ file, currentUser, myRole, members, categories, onDownload, 
                         <div>
                           <p className="text-white text-sm font-medium">
                             {member.user?.name}
-                            {isFileUploader && <span className="text-gray-500 ml-1">(uploader)</span>}
+                            {isFileUploader && <span className="text-gray-500 ml-1 text-xs">(uploader)</span>}
                           </p>
                           <p className="text-gray-500 text-xs">{member.user?.email}</p>
                         </div>
@@ -259,7 +267,8 @@ const FileCard = ({ file, currentUser, myRole, members, categories, onDownload, 
               </div>
             </div>
 
-            <div className="flex gap-3 justify-end">
+            {/* Modal Footer Actions */}
+            <div className="flex gap-3 justify-end mt-2">
               <button
                 onClick={() => setShowAccessModal(false)}
                 className="px-4 py-2 text-sm text-gray-400 hover:text-white transition"
