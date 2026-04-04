@@ -148,6 +148,8 @@ export const getFilesByOrg = async (req, res) => {
       ],
     })
       .populate("uploadedBy", "name email")
+      .populate('sharedWithCategories', 'name')  
+      .populate('allowedUsers', 'name email')
       .select("originalName mimeType size uploadedBy createdAt");
 
     res.status(200).json({ files });
