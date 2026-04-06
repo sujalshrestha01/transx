@@ -34,7 +34,20 @@ const fileSchema = new mongoose.Schema({
       user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
       accessedAt: { type: Date, default: Date.now }
     }
-  ]
+  ],
+ isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  isRecovered: { type: Boolean, default: false },
+  recoveredAt: { type: Date, default: null },
+  recoveredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  }
 }, { timestamps: true });
-
 export default mongoose.model('File', fileSchema);

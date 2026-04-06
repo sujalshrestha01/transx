@@ -9,7 +9,10 @@ import {
   revokeAccess,
   updateFileAccess,
   getRecentDownloads,
-  getActivityLog
+  getActivityLog,
+  getTrash,
+  restoreFile,
+  permanentDelete
 } from '../controllers/fileController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
@@ -26,5 +29,9 @@ router.put('/access/:fileId', protect, updateFileAccess);
 router.delete('/access/:fileId', protect, revokeAccess);
 router.delete('/delete/:fileId', protect, deleteFile);
 router.get('/org/:orgId', protect, getFilesByOrg);
+// --- TRASH ROUTES ---
+router.get('/trash/:orgId', protect, getTrash);
+router.put('/restore/:fileId', protect, restoreFile);
+router.delete('/permanent/:fileId', protect, permanentDelete);
 
 export default router;

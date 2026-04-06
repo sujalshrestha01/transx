@@ -27,6 +27,10 @@ const Organization = () => {
   const [myRole, setMyRole] = useState("member");
   const [storageUsed, setStorageUsed] = useState(0);
 
+  //trash
+  const [trashFiles, setTrashFiles] = useState([]);
+  const [trashLoading, setTrashLoading] = useState(false);
+
   // Upload state
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState("");
@@ -55,7 +59,7 @@ const Organization = () => {
   const [categoryMembers, setCategoryMembers] = useState([]);
 
   //activity filter
-  const [activityFilter, setActivityFilter] = useState('all');
+  const [activityFilter, setActivityFilter] = useState("all");
 
   // Settings state
   const [selectedMembers, setSelectedMembers] = useState([]);
@@ -132,6 +136,17 @@ const Organization = () => {
       console.error(err);
     }
   };
+  const fetchTrash = async () => {
+    setTrashLoading(true);
+    try {
+      const res = await axios.get(`/files/trash/${orgId}`);
+      setTrashFiles(res.data.files);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTrashLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (orgId) fetchAll();
@@ -141,6 +156,7 @@ const Organization = () => {
     if (activeTab === "activity" && myRole === "admin") {
       fetchActivity();
     }
+    if (activeTab === "trash" && myRole === "admin") fetchTrash();
   }, [activeTab]);
 
   // ── FILE UPLOAD ──
@@ -367,14 +383,14 @@ const Organization = () => {
     }
   };
 
-const handleUpdateOrgName = async (newName) => {
-  try {
-    await axios.put(`/org/${orgId}`, { name: newName });
-    fetchAll();
-  } catch (err) {
-    alert(err.response?.data?.message || 'Failed to update name');
-  }
-};
+  const handleUpdateOrgName = async (newName) => {
+    try {
+      await axios.put(`/org/${orgId}`, { name: newName });
+      fetchAll();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to update name");
+    }
+  };
 
   const handleDeleteOrg = async () => {
     if (
@@ -600,7 +616,6 @@ const handleUpdateOrgName = async (newName) => {
                 </button>
               </div>
             )}
-
             {/* ── FILES TAB ── */}
             {activeTab === "files" && (
               <div>
@@ -726,7 +741,6 @@ const handleUpdateOrgName = async (newName) => {
                 )}
               </div>
             )}
-
             {/* ── CATEGORIES TAB ── */}
             {activeTab === "categories" && (
               <div className="space-y-4">
@@ -825,7 +839,6 @@ const handleUpdateOrgName = async (newName) => {
                 )}
               </div>
             )}
-
             {/* ── MEMBERS TAB ── */}
             {activeTab === "members" && (
               <div className="space-y-3">
@@ -856,7 +869,6 @@ const handleUpdateOrgName = async (newName) => {
                 ))}
               </div>
             )}
-
             {/* ── RECENT DOWNLOADS TAB ── */}
             {activeTab === "recent" && (
               <div>
@@ -908,7 +920,6 @@ const handleUpdateOrgName = async (newName) => {
                 )}
               </div>
             )}
-
             {/* ── ACTIVITY LOG TAB ── */}
             {activeTab === "activity" && isAdminUser && (
               <div>
@@ -925,7 +936,7 @@ const handleUpdateOrgName = async (newName) => {
                       { value: "download", label: "⬇️ Downloads" },
                       { value: "join", label: "👤 Joins" },
                       { value: "delete", label: "🗑️ Deletes" },
-                      { value: 'role_change', label: '🔑 Role Changes' },
+                      { value: "role_change", label: "🔑 Role Changes" },
                     ].map(({ value, label }) => (
                       <button
                         key={value}
@@ -1048,7 +1059,125 @@ const handleUpdateOrgName = async (newName) => {
                 )}
               </div>
             )}
+            //trash
+            {/* ── TRASH TAB ── */}
+            {activeTab === "trash" && isAdminUser && (
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h3 className="text-white font-semibold text-lg">Bin</h3>
+                    <p className="text-gray-500 text-sm mt-0.5">
+                      Last 10 deleted files · Auto deleted after 30 days
+                    </p>
+                  </div>
+                </div>
 
+                {trashLoading ? (
+                  <div className="text-center py-16 text-gray-500">
+                    Loading...
+                  </div>
+                ) : trashFiles.length === 0 ? (
+                  <div className="text-center py-24">
+                    <div className="text-6xl mb-4">🗑️</div>
+                    <p className="text-gray-400 font-medium text-lg">
+                      Bin is empty
+                    </p>
+                    <p className="text-gray-600 text-sm mt-1">
+                      Deleted files will appear here
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {trashFiles.map((file) => (
+                      <div
+                        key={file._id}
+                        className="bg-gray-900 border border-gray-800 rounded-xl px-5 py-4"
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          {/* File info */}
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="text-2xl shrink-0">
+                              {getFileIcon(file.mimeType)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-white text-sm font-medium truncate">
+                                  {file.originalName}
+                                </p>
+                                <span
+                                  className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 border
+                      ${
+                        file.daysRemaining <= 3
+                          ? "bg-red-600/20 text-red-400 border-red-500/30"
+                          : "bg-gray-800 text-gray-500 border-gray-700"
+                      }`}
+                                >
+                                  {file.daysRemaining <= 3
+                                    ? `⚠️ ${file.daysRemaining}d left`
+                                    : `${file.daysRemaining}d left`}
+                                </span>
+                              </div>
+                              <p className="text-gray-500 text-xs mt-0.5">
+                                Deleted by {file.deletedBy?.name} ·{" "}
+                                {timeAgo(file.deletedAt)}
+                              </p>
+                              <p className="text-gray-600 text-xs">
+                                Uploaded by {file.uploadedBy?.name}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await axios.put(`/files/restore/${file._id}`);
+                                  fetchTrash();
+                                  fetchAll();
+                                } catch (err) {
+                                  alert(
+                                    err.response?.data?.message ||
+                                      "Failed to restore",
+                                  );
+                                }
+                              }}
+                              className="px-3 py-1.5 text-xs bg-green-600/20 hover:bg-green-600 text-green-400 hover:text-white rounded-lg transition"
+                            >
+                              ↩️ Restore
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (
+                                  !confirm(
+                                    "Permanently delete this file? This cannot be undone.",
+                                  )
+                                )
+                                  return;
+                                try {
+                                  await axios.delete(
+                                    `/files/permanent/${file._id}`,
+                                  );
+                                  fetchTrash();
+                                } catch (err) {
+                                  alert(
+                                    err.response?.data?.message ||
+                                      "Failed to delete",
+                                  );
+                                }
+                              }}
+                              className="px-3 py-1.5 text-xs bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg transition"
+                            >
+                              Delete Forever
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {/* ── SETTINGS TAB ── */}
             {activeTab === "settings" && isAdminUser && (
               <SettingsTab

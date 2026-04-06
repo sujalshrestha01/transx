@@ -17,9 +17,10 @@ if (!fs.existsSync(uploadDir)) {
 
 // Helper — get member's role in org
 const getMemberRole = (org, userId) => {
-  const member = org.members.find(
-    (m) => m.user.toString() === userId.toString(),
-  );
+  const member = org.members.find((m) => {
+    const memberId = m.user._id ? m.user._id.toString() : m.user.toString();
+    return memberId === userId.toString();
+  });
   return member ? member.role : null;
 };
 
@@ -118,12 +119,12 @@ export const getFilesByOrg = async (req, res) => {
 
     if (role === "admin") {
       // Admin sees ALL files
-      const files = await File.find({ organization: org._id })
+      const files = await File.find({ organization: org._id, isDeleted: { $ne: true } })
         .populate("uploadedBy", "name email")
         .populate("sharedWithCategories", "name")
         .populate("allowedUsers", "name email")
         .select(
-          "originalName mimeType size uploadedBy sharedWithCategories allowedUsers createdAt",
+          "originalName mimeType size uploadedBy sharedWithCategories allowedUsers createdAt isRecovered",
         );
       return res.status(200).json({ files });
     }
@@ -142,6 +143,7 @@ export const getFilesByOrg = async (req, res) => {
     // 2. User belongs to a category the file is shared with
     const files = await File.find({
       organization: org._id,
+      isDeleted: { $ne: true },
       $or: [
         { allowedUsers: req.user._id },
         { sharedWithCategories: { $in: categoryIds } },
@@ -150,7 +152,8 @@ export const getFilesByOrg = async (req, res) => {
       .populate("uploadedBy", "name email")
       .populate('sharedWithCategories', 'name')  
       .populate('allowedUsers', 'name email')
-      .select("originalName mimeType size uploadedBy createdAt");
+      .select('originalName mimeType size uploadedBy sharedWithCategories allowedUsers createdAt isRecovered')
+;
 
     res.status(200).json({ files });
   } catch (error) {
@@ -164,7 +167,7 @@ export const downloadFile = async (req, res) => {
   try {
     const file = await File.findById(req.params.fileId);
     if (!file) return res.status(404).json({ message: "File not found" });
-
+    if (file.isDeleted) return res.status(404).json({ message: 'File is in trash' });//trash check right after finding the file
     const org = await Organization.findById(file.organization);
     const role = getMemberRole(org, req.user._id);
 
@@ -315,32 +318,46 @@ export const revokeAccess = async (req, res) => {
 export const deleteFile = async (req, res) => {
   try {
     const file = await File.findById(req.params.fileId);
-    if (!file) return res.status(404).json({ message: "File not found" });
+    if (!file) return res.status(404).json({ message: 'File not found' });
 
     const org = await Organization.findById(file.organization);
     const role = getMemberRole(org, req.user._id);
 
     const canDelete =
-      role === "admin" ||
+      role === 'admin' ||
       file.uploadedBy.toString() === req.user._id.toString();
 
     if (!canDelete) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to delete this file" });
+      return res.status(403).json({ message: 'Not authorized to delete this file' });
     }
 
-    // Log delete activity before deleting
-    await logActivity(file.organization, "delete", req.user._id, {
-      fileName: file.originalName,
+    // Soft delete — don't remove from disk yet
+    file.isDeleted = true;
+    file.deletedAt = new Date();
+    file.deletedBy = req.user._id;
+    await file.save();
+
+    // Keep only last 10 files in trash per org
+    const trashedFiles = await File.find({
+      organization: file.organization,
+      isDeleted: true
+    }).sort({ deletedAt: -1 });
+
+    if (trashedFiles.length > 10) {
+      const toDelete = trashedFiles.slice(10);
+      for (const f of toDelete) {
+        const filePath = path.join(uploadDir, f.storedName);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        await f.deleteOne();
+      }
+    }
+
+    await logActivity(file.organization, 'delete', req.user._id, {
+      fileName: file.originalName
     });
 
-    const filePath = path.join(uploadDir, file.storedName);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    res.status(200).json({ message: 'File moved to trash' });
 
-    await file.deleteOne();
-
-    res.status(200).json({ message: "File deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -472,6 +489,105 @@ export const getActivityLog = async (req, res) => {
       .slice(0, 100);
 
     res.status(200).json({ activity });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @route GET /api/files/trash/:orgId
+export const getTrash = async (req, res) => {
+  try {
+    const org = await Organization.findById(req.params.orgId);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+    const role = getMemberRole(org, req.user._id);
+    if (role !== 'admin') {
+      return res.status(403).json({ message: 'Only admin can view trash' });
+    }
+
+    const files = await File.find({
+      organization: req.params.orgId,
+      isDeleted: true
+    })
+      .populate('uploadedBy', 'name email')
+      .populate('deletedBy', 'name email')
+      .sort({ deletedAt: -1 })
+      .select('originalName mimeType size uploadedBy deletedBy deletedAt createdAt');
+
+    const filesWithDays = files.map(file => {
+      const deletedAt = new Date(file.deletedAt);
+      const expiresAt = new Date(deletedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const daysRemaining = Math.ceil((expiresAt - new Date()) / (1000 * 60 * 60 * 24));
+      return {
+        ...file.toObject(),
+        daysRemaining: Math.max(0, daysRemaining),
+        expiresAt
+      };
+    });
+
+    res.status(200).json({ files: filesWithDays });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @route PUT /api/files/restore/:fileId
+export const restoreFile = async (req, res) => {
+  try {
+    const file = await File.findById(req.params.fileId);
+    if (!file) return res.status(404).json({ message: 'File not found' });
+
+    const org = await Organization.findById(file.organization);
+    const role = getMemberRole(org, req.user._id);
+
+    if (role !== 'admin') {
+      return res.status(403).json({ message: 'Only admin can restore files' });
+    }
+
+    if (!file.isDeleted) {
+      return res.status(400).json({ message: 'File is not in trash' });
+    }
+
+    // Restore — allowedUsers and sharedWithCategories untouched
+    file.isDeleted = false;
+    file.deletedAt = null;
+    file.deletedBy = null;
+    file.isRecovered = true;
+    file.recoveredAt = new Date();
+    file.recoveredBy = req.user._id;
+    await file.save();
+
+    await logActivity(file.organization, 'restore', req.user._id, {
+      fileName: file.originalName
+    });
+
+    res.status(200).json({ message: 'File restored successfully' });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @route DELETE /api/files/permanent/:fileId
+export const permanentDelete = async (req, res) => {
+  try {
+    const file = await File.findById(req.params.fileId);
+    if (!file) return res.status(404).json({ message: 'File not found' });
+
+    const org = await Organization.findById(file.organization);
+    const role = getMemberRole(org, req.user._id);
+
+    if (role !== 'admin') {
+      return res.status(403).json({ message: 'Only admin can permanently delete files' });
+    }
+
+    const filePath = path.join(uploadDir, file.storedName);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    await file.deleteOne();
+
+    res.status(200).json({ message: 'File permanently deleted' });
 
   } catch (error) {
     res.status(500).json({ message: error.message });

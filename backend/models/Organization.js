@@ -40,7 +40,7 @@ const organizationSchema = new mongoose.Schema({
     {
       type: {
         type: String,
-        enum: ['upload', 'download', 'join', 'delete', 'role_change'],
+        enum: ['upload', 'download', 'join', 'delete', 'role_change','restore'],
         required: true
       },
       user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

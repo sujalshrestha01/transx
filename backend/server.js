@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes.js';
 import orgRoutes from './routes/orgRoutes.js';
 import fileRoutes from './routes/fileRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
+import { startCleanupJob } from './utils/cleanupJob.js';
 
 dotenv.config();
 connectDB();
@@ -26,6 +27,8 @@ app.use('/api/categories', categoryRoutes);
 app.get('/', (req, res) => {
   res.send('TransX API is running...');
 });
+
+startCleanupJob();
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

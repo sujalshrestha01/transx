@@ -17,6 +17,7 @@ const Sidebar = ({
     { id: 'members', icon: '👥', label: 'Members', count: membersCount },
     { id: 'recent', icon: '🕐', label: 'Recent Downloads' },
     ...(isAdmin ? [{ id: 'activity', icon: '📊', label: 'Activity Log' }] : []),
+    ...(isAdmin ? [{ id: 'trash', icon: '🗑️', label: 'Bin' }] : []),
     ...(isAdmin ? [{ id: 'settings', icon: '⚙️', label: 'Settings' }] : [])
   ];
 

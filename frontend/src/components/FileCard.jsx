@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
-import axios from '../api/axios';
-import AccessSelector from './organization/AccessSelector';
+import { useState, useMemo } from "react";
+import axios from "../api/axios";
+import AccessSelector from "./organization/AccessSelector";
 
 const FileCard = ({
   file,
@@ -10,33 +10,33 @@ const FileCard = ({
   categories,
   onDownload,
   onDelete,
-  onRefresh
+  onRefresh,
 }) => {
   const [showAccessModal, setShowAccessModal] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [accessError, setAccessError] = useState('');
+  const [accessError, setAccessError] = useState("");
 
   const formatSize = (bytes) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
   const getFileIcon = (mimeType) => {
-    if (!mimeType) return '📁';
-    if (mimeType.includes('image')) return '🖼️';
-    if (mimeType.includes('pdf')) return '📄';
-    if (mimeType.includes('video')) return '🎥';
-    if (mimeType.includes('audio')) return '🎵';
-    if (mimeType.includes('zip') || mimeType.includes('rar')) return '🗜️';
-    if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
-    if (mimeType.includes('sheet') || mimeType.includes('excel')) return '📊';
-    return '📁';
+    if (!mimeType) return "📁";
+    if (mimeType.includes("image")) return "🖼️";
+    if (mimeType.includes("pdf")) return "📄";
+    if (mimeType.includes("video")) return "🎥";
+    if (mimeType.includes("audio")) return "🎵";
+    if (mimeType.includes("zip") || mimeType.includes("rar")) return "🗜️";
+    if (mimeType.includes("word") || mimeType.includes("document")) return "📝";
+    if (mimeType.includes("sheet") || mimeType.includes("excel")) return "📊";
+    return "📁";
   };
 
-  const isAdmin = myRole === 'admin';
+  const isAdmin = myRole === "admin";
   const isUploader =
     file.uploadedBy?._id === currentUser?.id ||
     file.uploadedBy?._id?.toString() === currentUser?.id;
@@ -49,45 +49,49 @@ const FileCard = ({
     const parts = [];
     if (file.sharedWithCategories?.length > 0) {
       const names = file.sharedWithCategories
-        .map(cat => typeof cat === 'object' ? cat.name : null)
+        .map((cat) => (typeof cat === "object" ? cat.name : null))
         .filter(Boolean);
-      names.forEach(name => parts.push(`📂 ${name}`));
+      names.forEach((name) => parts.push(`📂 ${name}`));
     }
-    const individuals = (file.allowedUsers || []).filter(u => {
-      const uid = typeof u === 'object' ? u._id?.toString() : u?.toString();
+    const individuals = (file.allowedUsers || []).filter((u) => {
+      const uid = typeof u === "object" ? u._id?.toString() : u?.toString();
       return uid !== uploaderId;
     });
     if (individuals.length > 0) {
-      parts.push(`👤 ${individuals.length} individual${individuals.length !== 1 ? 's' : ''}`);
+      parts.push(
+        `👤 ${individuals.length} individual${individuals.length !== 1 ? "s" : ""}`,
+      );
     }
-    return parts.length > 0 ? parts.join(' + ') : 'No access assigned';
+    return parts.length > 0 ? parts.join(" + ") : "No access assigned";
   };
 
   const openAccessModal = () => {
-    const currentCategoryIds = (file.sharedWithCategories || [])
-      .map(c => typeof c === 'object' ? c._id : c);
-    const currentUserIds = (file.allowedUsers || [])
-      .map(u => typeof u === 'object' ? u._id : u);
+    const currentCategoryIds = (file.sharedWithCategories || []).map((c) =>
+      typeof c === "object" ? c._id : c,
+    );
+    const currentUserIds = (file.allowedUsers || []).map((u) =>
+      typeof u === "object" ? u._id : u,
+    );
     setSelectedCategories(currentCategoryIds);
     setSelectedUsers(currentUserIds);
-    setAccessError('');
+    setAccessError("");
     setShowAccessModal(true);
   };
 
   const toggleCategory = (catId) => {
-    setSelectedCategories(prev =>
+    setSelectedCategories((prev) =>
       prev.includes(catId) || prev.includes(catId?.toString())
-        ? prev.filter(id => id !== catId && id !== catId?.toString())
-        : [...prev, catId]
+        ? prev.filter((id) => id !== catId && id !== catId?.toString())
+        : [...prev, catId],
     );
   };
 
   const toggleUser = (userId) => {
     if (userId?.toString() === uploaderId) return;
-    setSelectedUsers(prev =>
+    setSelectedUsers((prev) =>
       prev.includes(userId) || prev.includes(userId?.toString())
-        ? prev.filter(id => id !== userId && id !== userId?.toString())
-        : [...prev, userId]
+        ? prev.filter((id) => id !== userId && id !== userId?.toString())
+        : [...prev, userId],
     );
   };
 
@@ -111,10 +115,10 @@ const FileCard = ({
   const totalSelected = useMemo(() => {
     const direct = new Set(
       selectedUsers
-        .filter(id => id?.toString() !== uploaderId)
-        .map(id => id?.toString())
+        .filter((id) => id?.toString() !== uploaderId)
+        .map((id) => id?.toString()),
     );
-    categoryMemberIds.forEach(id => {
+    categoryMemberIds.forEach((id) => {
       if (id !== uploaderId) direct.add(id);
     });
     return direct.size;
@@ -122,16 +126,16 @@ const FileCard = ({
 
   const handleSaveAccess = async () => {
     setSaving(true);
-    setAccessError('');
+    setAccessError("");
     try {
       await axios.put(`/files/access/${file._id}`, {
         sharedWithCategories: selectedCategories,
-        allowedUsers: selectedUsers
+        allowedUsers: selectedUsers,
       });
       setShowAccessModal(false);
       onRefresh();
     } catch (err) {
-      setAccessError(err.response?.data?.message || 'Failed to update access');
+      setAccessError(err.response?.data?.message || "Failed to update access");
     } finally {
       setSaving(false);
     }
@@ -141,17 +145,27 @@ const FileCard = ({
     <>
       <div className="bg-gray-900 border border-gray-800 hover:border-gray-700 rounded-xl p-4 transition">
         <div className="flex items-center justify-between gap-4">
-
           {/* File Info */}
           <div className="flex items-center gap-3 min-w-0">
-            <div className="text-2xl shrink-0">{getFileIcon(file.mimeType)}</div>
+            <div className="text-2xl shrink-0">
+              {getFileIcon(file.mimeType)}
+            </div>
             <div className="min-w-0">
-              <p className="text-white text-sm font-medium truncate">{file.originalName}</p>
+              <p className="text-white text-sm font-medium truncate">
+                {file.originalName}
+              </p>
+              {file.isRecovered && (
+                <span className="text-xs bg-green-600/20 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30 shrink-0">
+                  Restored : admin
+                </span>
+              )}
               <p className="text-gray-500 text-xs mt-0.5">
                 {formatSize(file.size)} · Uploaded by {file.uploadedBy?.name}
               </p>
               {canEditAccess && (
-                <p className="text-gray-600 text-xs mt-0.5">{getAccessSummary()}</p>
+                <p className="text-gray-600 text-xs mt-0.5">
+                  {getAccessSummary()}
+                </p>
               )}
             </div>
           </div>
@@ -188,11 +202,12 @@ const FileCard = ({
       {showAccessModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl border border-gray-800 flex flex-col max-h-[90vh]">
-
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-800">
               <div>
-                <h3 className="text-white font-semibold text-lg">Edit Access</h3>
+                <h3 className="text-white font-semibold text-lg">
+                  Edit Access
+                </h3>
                 <p className="text-gray-500 text-xs mt-0.5">
                   Control who can view this file
                 </p>
@@ -211,12 +226,16 @@ const FileCard = ({
                 {getFileIcon(file.mimeType)}
               </div>
               <div className="min-w-0">
-                <p className="text-white text-sm font-medium truncate">{file.originalName}</p>
-                <p className="text-gray-500 text-xs mt-0.5">{formatSize(file.size)}</p>
+                <p className="text-white text-sm font-medium truncate">
+                  {file.originalName}
+                </p>
+                <p className="text-gray-500 text-xs mt-0.5">
+                  {formatSize(file.size)}
+                </p>
               </div>
               <div className="ml-auto shrink-0">
                 <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded-full">
-                  {totalSelected} recipient{totalSelected !== 1 ? 's' : ''}
+                  {totalSelected} recipient{totalSelected !== 1 ? "s" : ""}
                 </span>
               </div>
             </div>
@@ -246,9 +265,8 @@ const FileCard = ({
             <div className="px-6 py-4 border-t border-gray-800 flex items-center justify-between gap-4">
               <p className="text-gray-500 text-xs">
                 {totalSelected > 0
-                  ? `${totalSelected} recipient${totalSelected !== 1 ? 's' : ''} will have access`
-                  : 'No recipients selected'
-                }
+                  ? `${totalSelected} recipient${totalSelected !== 1 ? "s" : ""} will have access`
+                  : "No recipients selected"}
               </p>
               <div className="flex gap-3">
                 <button
@@ -264,14 +282,29 @@ const FileCard = ({
                 >
                   {saving ? (
                     <span className="flex items-center gap-2">
-                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      <svg
+                        className="w-4 h-4 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8z"
+                        />
                       </svg>
                       Saving...
                     </span>
                   ) : (
-                    'Save Access →'
+                    "Save Access →"
                   )}
                 </button>
               </div>
