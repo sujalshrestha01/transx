@@ -3,6 +3,7 @@ import {
   createOrganization,
   joinOrganization,
   getMyOrganizations,
+   markOrgAsRead,
   updateOrganization,
   deleteOrganization  ,
   leaveOrganization,
@@ -19,6 +20,7 @@ const router = express.Router();
 router.post('/create', protect, createOrganization);
 router.post('/join', protect, joinOrganization);
 router.get('/my', protect, getMyOrganizations);
+router.post('/:orgId/read', protect, markOrgAsRead);
 router.get('/:orgId/members', protect, getOrgMembers);
 router.put('/:orgId/role', protect, updateMemberRole);
 router.put('/:orgId/bulk-role', protect, bulkUpdateRole);

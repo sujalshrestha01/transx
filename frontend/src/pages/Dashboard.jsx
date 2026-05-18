@@ -10,7 +10,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [orgName, setOrgName] = useState('');
@@ -18,7 +17,6 @@ const Dashboard = () => {
   const [modalError, setModalError] = useState('');
   const [modalLoading, setModalLoading] = useState(false);
 
-  // Fetch organizations
   const fetchOrgs = async () => {
     try {
       const res = await axios.get('/org/my');
@@ -34,7 +32,6 @@ const Dashboard = () => {
     fetchOrgs();
   }, []);
 
-  // Create org
   const handleCreate = async (e) => {
     e.preventDefault();
     setModalError('');
@@ -51,7 +48,6 @@ const Dashboard = () => {
     }
   };
 
-  // Join org
   const handleJoin = async (e) => {
     e.preventDefault();
     setModalError('');
@@ -66,6 +62,16 @@ const Dashboard = () => {
     } finally {
       setModalLoading(false);
     }
+  };
+
+  const handleOrgClick = async (org) => {
+    // Mark as read then navigate
+    if (org.unreadCount > 0) {
+      try {
+        await axios.post(`/org/${org._id}/read`);
+      } catch (_) {}
+    }
+    navigate(`/org/${org._id}`);
   };
 
   return (
@@ -117,9 +123,20 @@ const Dashboard = () => {
             {orgs.map((org) => (
               <div
                 key={org._id}
-                onClick={() => navigate(`/org/${org._id}`)}
-                className="bg-gray-900 border border-gray-800 hover:border-blue-500 rounded-2xl p-6 cursor-pointer transition group"
+                onClick={() => handleOrgClick(org)}
+                className={`relative bg-gray-900 border rounded-2xl p-6 cursor-pointer transition group
+                  ${org.unreadCount > 0
+                    ? 'border-blue-500/60 shadow-lg shadow-blue-500/10'
+                    : 'border-gray-800 hover:border-blue-500'
+                  }`}
               >
+                {/* Unread badge */}
+                {org.unreadCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold min-w-6 h-6 px-1.5 rounded-full flex items-center justify-center shadow-lg">
+                    {org.unreadCount > 99 ? '99+' : org.unreadCount}
+                  </span>
+                )}
+
                 {/* Icon */}
                 <div className="w-12 h-12 rounded-xl bg-blue-600/20 flex items-center justify-center text-2xl mb-4">
                   🏢
@@ -141,6 +158,13 @@ const Dashboard = () => {
                     {org.joinCode}
                   </span>
                 </div>
+
+                {/* New files indicator */}
+                {org.unreadCount > 0 && (
+                  <div className="mt-3 text-xs text-blue-400 font-medium">
+                    {org.unreadCount} new file{org.unreadCount !== 1 ? 's' : ''} 🔵
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -152,13 +176,11 @@ const Dashboard = () => {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <h3 className="text-white font-semibold text-lg mb-4">Create Organization</h3>
-
             {modalError && (
               <div className="bg-red-500/10 border border-red-500 text-red-400 px-4 py-2 rounded-lg mb-4 text-sm">
                 {modalError}
               </div>
             )}
-
             <form onSubmit={handleCreate} className="space-y-4">
               <input
                 type="text"
@@ -169,18 +191,8 @@ const Dashboard = () => {
                 className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-600"
               />
               <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-sm text-gray-400 hover:text-white transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={modalLoading}
-                  className="px-5 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50"
-                >
+                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition">Cancel</button>
+                <button type="submit" disabled={modalLoading} className="px-5 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50">
                   {modalLoading ? 'Creating...' : 'Create'}
                 </button>
               </div>
@@ -194,13 +206,11 @@ const Dashboard = () => {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <h3 className="text-white font-semibold text-lg mb-4">Join Organization</h3>
-
             {modalError && (
               <div className="bg-red-500/10 border border-red-500 text-red-400 px-4 py-2 rounded-lg mb-4 text-sm">
                 {modalError}
               </div>
             )}
-
             <form onSubmit={handleJoin} className="space-y-4">
               <input
                 type="text"
@@ -211,18 +221,8 @@ const Dashboard = () => {
                 className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-600 font-mono"
               />
               <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowJoinModal(false)}
-                  className="px-4 py-2 text-sm text-gray-400 hover:text-white transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={modalLoading}
-                  className="px-5 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50"
-                >
+                <button type="button" onClick={() => setShowJoinModal(false)} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition">Cancel</button>
+                <button type="submit" disabled={modalLoading} className="px-5 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50">
                   {modalLoading ? 'Joining...' : 'Join'}
                 </button>
               </div>

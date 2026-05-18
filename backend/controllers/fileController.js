@@ -87,6 +87,26 @@ export const uploadFile = async (req, res) => {
       allowedUsers,
     });
 
+    // Update notification fields on the org
+    const allowedUserIds = allowedUsers.map((id) => id.toString());
+
+    const memberIds = org.members.map((m) =>
+      m.user._id ? m.user._id.toString() : m.user.toString(),
+    );
+
+    for (const memberId of memberIds) {
+      // Only notify if they have access AND they're not the uploader
+      if (
+        memberId !== req.user._id.toString() &&
+        allowedUserIds.includes(memberId)
+      ) {
+        const current = org.unreadCounts.get(memberId) || 0;
+        org.unreadCounts.set(memberId, current + 1);
+      }
+    }
+    org.lastFileUploadedAt = new Date();
+    await org.save();
+
     // Log upload activity
     await logActivity(org._id, "upload", req.user._id, {
       fileName: req.file.originalname,
@@ -119,7 +139,10 @@ export const getFilesByOrg = async (req, res) => {
 
     if (role === "admin") {
       // Admin sees ALL files
-      const files = await File.find({ organization: org._id, isDeleted: { $ne: true } })
+      const files = await File.find({
+        organization: org._id,
+        isDeleted: { $ne: true },
+      })
         .populate("uploadedBy", "name email")
         .populate("sharedWithCategories", "name")
         .populate("allowedUsers", "name email")
@@ -150,11 +173,11 @@ export const getFilesByOrg = async (req, res) => {
       ],
     })
       .populate("uploadedBy", "name email")
-      .populate('sharedWithCategories', 'name')  
-      .populate('allowedUsers', 'name email')
-      .select('originalName mimeType size uploadedBy sharedWithCategories allowedUsers createdAt isRecovered')
-;
-
+      .populate("sharedWithCategories", "name")
+      .populate("allowedUsers", "name email")
+      .select(
+        "originalName mimeType size uploadedBy sharedWithCategories allowedUsers createdAt isRecovered",
+      );
     res.status(200).json({ files });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -167,7 +190,8 @@ export const downloadFile = async (req, res) => {
   try {
     const file = await File.findById(req.params.fileId);
     if (!file) return res.status(404).json({ message: "File not found" });
-    if (file.isDeleted) return res.status(404).json({ message: 'File is in trash' });//trash check right after finding the file
+    if (file.isDeleted)
+      return res.status(404).json({ message: "File is in trash" }); //trash check right after finding the file
     const org = await Organization.findById(file.organization);
     const role = getMemberRole(org, req.user._id);
 
@@ -318,17 +342,19 @@ export const revokeAccess = async (req, res) => {
 export const deleteFile = async (req, res) => {
   try {
     const file = await File.findById(req.params.fileId);
-    if (!file) return res.status(404).json({ message: 'File not found' });
+    if (!file) return res.status(404).json({ message: "File not found" });
 
     const org = await Organization.findById(file.organization);
     const role = getMemberRole(org, req.user._id);
 
     const canDelete =
-      role === 'admin' ||
+      role === "admin" ||
       file.uploadedBy.toString() === req.user._id.toString();
 
     if (!canDelete) {
-      return res.status(403).json({ message: 'Not authorized to delete this file' });
+      return res
+        .status(403)
+        .json({ message: "Not authorized to delete this file" });
     }
 
     // Soft delete — don't remove from disk yet
@@ -340,7 +366,7 @@ export const deleteFile = async (req, res) => {
     // Keep only last 10 files in trash per org
     const trashedFiles = await File.find({
       organization: file.organization,
-      isDeleted: true
+      isDeleted: true,
     }).sort({ deletedAt: -1 });
 
     if (trashedFiles.length > 10) {
@@ -352,12 +378,11 @@ export const deleteFile = async (req, res) => {
       }
     }
 
-    await logActivity(file.organization, 'delete', req.user._id, {
-      fileName: file.originalName
+    await logActivity(file.organization, "delete", req.user._id, {
+      fileName: file.originalName,
     });
 
-    res.status(200).json({ message: 'File moved to trash' });
-
+    res.status(200).json({ message: "File moved to trash" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -473,14 +498,19 @@ export const getRecentDownloads = async (req, res) => {
 // @route GET /api/files/activity/:orgId
 export const getActivityLog = async (req, res) => {
   try {
-    const org = await Organization.findById(req.params.orgId)
-      .populate('activityLog.user', 'name email');
+    const org = await Organization.findById(req.params.orgId).populate(
+      "activityLog.user",
+      "name email",
+    );
 
-    if (!org) return res.status(404).json({ message: 'Organization not found' });
+    if (!org)
+      return res.status(404).json({ message: "Organization not found" });
 
     const role = getMemberRole(org, req.user._id);
-    if (role !== 'admin') {
-      return res.status(403).json({ message: 'Only admin can view activity log' });
+    if (role !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Only admin can view activity log" });
     }
 
     // Sort by most recent
@@ -489,7 +519,6 @@ export const getActivityLog = async (req, res) => {
       .slice(0, 100);
 
     res.status(200).json({ activity });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -499,35 +528,41 @@ export const getActivityLog = async (req, res) => {
 export const getTrash = async (req, res) => {
   try {
     const org = await Organization.findById(req.params.orgId);
-    if (!org) return res.status(404).json({ message: 'Organization not found' });
+    if (!org)
+      return res.status(404).json({ message: "Organization not found" });
 
     const role = getMemberRole(org, req.user._id);
-    if (role !== 'admin') {
-      return res.status(403).json({ message: 'Only admin can view trash' });
+    if (role !== "admin") {
+      return res.status(403).json({ message: "Only admin can view trash" });
     }
 
     const files = await File.find({
       organization: req.params.orgId,
-      isDeleted: true
+      isDeleted: true,
     })
-      .populate('uploadedBy', 'name email')
-      .populate('deletedBy', 'name email')
+      .populate("uploadedBy", "name email")
+      .populate("deletedBy", "name email")
       .sort({ deletedAt: -1 })
-      .select('originalName mimeType size uploadedBy deletedBy deletedAt createdAt');
+      .select(
+        "originalName mimeType size uploadedBy deletedBy deletedAt createdAt",
+      );
 
-    const filesWithDays = files.map(file => {
+    const filesWithDays = files.map((file) => {
       const deletedAt = new Date(file.deletedAt);
-      const expiresAt = new Date(deletedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
-      const daysRemaining = Math.ceil((expiresAt - new Date()) / (1000 * 60 * 60 * 24));
+      const expiresAt = new Date(
+        deletedAt.getTime() + 30 * 24 * 60 * 60 * 1000,
+      );
+      const daysRemaining = Math.ceil(
+        (expiresAt - new Date()) / (1000 * 60 * 60 * 24),
+      );
       return {
         ...file.toObject(),
         daysRemaining: Math.max(0, daysRemaining),
-        expiresAt
+        expiresAt,
       };
     });
 
     res.status(200).json({ files: filesWithDays });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -537,17 +572,17 @@ export const getTrash = async (req, res) => {
 export const restoreFile = async (req, res) => {
   try {
     const file = await File.findById(req.params.fileId);
-    if (!file) return res.status(404).json({ message: 'File not found' });
+    if (!file) return res.status(404).json({ message: "File not found" });
 
     const org = await Organization.findById(file.organization);
     const role = getMemberRole(org, req.user._id);
 
-    if (role !== 'admin') {
-      return res.status(403).json({ message: 'Only admin can restore files' });
+    if (role !== "admin") {
+      return res.status(403).json({ message: "Only admin can restore files" });
     }
 
     if (!file.isDeleted) {
-      return res.status(400).json({ message: 'File is not in trash' });
+      return res.status(400).json({ message: "File is not in trash" });
     }
 
     // Restore — allowedUsers and sharedWithCategories untouched
@@ -559,12 +594,11 @@ export const restoreFile = async (req, res) => {
     file.recoveredBy = req.user._id;
     await file.save();
 
-    await logActivity(file.organization, 'restore', req.user._id, {
-      fileName: file.originalName
+    await logActivity(file.organization, "restore", req.user._id, {
+      fileName: file.originalName,
     });
 
-    res.status(200).json({ message: 'File restored successfully' });
-
+    res.status(200).json({ message: "File restored successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -574,21 +608,22 @@ export const restoreFile = async (req, res) => {
 export const permanentDelete = async (req, res) => {
   try {
     const file = await File.findById(req.params.fileId);
-    if (!file) return res.status(404).json({ message: 'File not found' });
+    if (!file) return res.status(404).json({ message: "File not found" });
 
     const org = await Organization.findById(file.organization);
     const role = getMemberRole(org, req.user._id);
 
-    if (role !== 'admin') {
-      return res.status(403).json({ message: 'Only admin can permanently delete files' });
+    if (role !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Only admin can permanently delete files" });
     }
 
     const filePath = path.join(uploadDir, file.storedName);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     await file.deleteOne();
 
-    res.status(200).json({ message: 'File permanently deleted' });
-
+    res.status(200).json({ message: "File permanently deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

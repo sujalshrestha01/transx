@@ -48,7 +48,16 @@ const organizationSchema = new mongoose.Schema({
       meta: { type: String },
       at: { type: Date, default: Date.now }
     }
-  ]
+  ],
+  lastFileUploadedAt: {
+  type: Date,
+  default: null
+},
+unreadCounts: {
+  type: Map,
+  of: Number,
+  default: {}
+}
 }, { timestamps: true });
 
 export default mongoose.model('Organization', organizationSchema);

@@ -75,18 +75,45 @@ export const joinOrganization = async (req, res) => {
 // @route  GET /api/org/my
 export const getMyOrganizations = async (req, res) => {
   try {
+    const userId = req.user._id.toString();
+
     const orgs = await Organization.find({
       'members.user': req.user._id
     })
       .populate('admin', 'name email')
-      .populate('members.user', 'name email');
+      .populate('members.user', 'name email')
+      .sort({ lastFileUploadedAt: -1, createdAt: -1 });
 
-    res.status(200).json({ organizations: orgs });
+    // Attach each user's personal unread count
+    const orgsWithUnread = orgs.map((org) => {
+      const plain = org.toObject();
+      plain.unreadCount = org.unreadCounts?.get(userId) || 0;
+      return plain;
+    });
 
+    res.status(200).json({ organizations: orgsWithUnread });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+// @route POST /api/org/:orgId/read
+export const markOrgAsRead = async (req, res) => {
+  try {
+    const org = await Organization.findById(req.params.orgId);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+    const userId = req.user._id.toString();
+    org.unreadCounts.set(userId, 0);
+    await org.save();
+
+    res.status(200).json({ message: 'Marked as read' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 // @route  GET /api/org/:orgId/members
 export const getOrgMembers = async (req, res) => {
