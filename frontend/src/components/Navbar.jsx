@@ -18,7 +18,7 @@ useEffect(() => {
 }, [token, navigate]);
 
   return (
-    <nav className="bg-gray-900 border-b border-gray-800 px-6 py-4">
+    <nav className="sticky top-0 left-0 right-0 z-99 bg-gray-900 border-b border-gray-800 px-6 py-4">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
 
         {/* Logo */}

@@ -18,7 +18,7 @@ const Sidebar = ({
     { id: 'recent', icon: '🕐', label: 'Recent Downloads' },
     ...(isAdmin ? [{ id: 'activity', icon: '📊', label: 'Activity Log' }] : []),
     ...(isAdmin ? [{ id: 'trash', icon: '🗑️', label: 'Bin' }] : []),
-    ...(isAdmin ? [{ id: 'settings', icon: '⚙️', label: 'Settings' }] : [])
+    { id: 'settings', icon: '⚙️', label: 'Settings' }
   ];
 
   const formatStorage = (bytes) => {
@@ -35,7 +35,7 @@ const Sidebar = ({
   };
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-gray-900 border-r border-gray-800 flex flex-col min-h-screen">
+    <aside className=" w-64   shrink-0 bg-gray-900 border-r border-gray-800 flex flex-col ">
 
       {/* Nav Items */}
       <nav className="flex-1 p-4 space-y-1 pt-6">

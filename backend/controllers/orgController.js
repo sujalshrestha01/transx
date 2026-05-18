@@ -280,6 +280,49 @@ export const updateOrganization = async (req, res) => {
   }
 };
 
+// @route DELETE /api/org/:orgId/leave
+export const leaveOrganization = async (req, res) => {
+  try {
+    const org = await Organization.findById(req.params.orgId);
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+    const userId = req.user._id.toString();
+
+    if (org.admin.toString() === userId) {
+      return res.status(400).json({
+        message: 'You are the admin. Transfer ownership or delete the organization instead.'
+      });
+    }
+
+    const isMember = org.members.some((m) => m.user.toString() === userId);
+    if (!isMember) {
+      return res.status(400).json({ message: 'You are not a member of this organization' });
+    }
+
+    org.members = org.members.filter((m) => m.user.toString() !== userId);
+    await org.save();
+
+    await File.updateMany(
+      { organization: org._id },
+      { $pull: { allowedUsers: req.user._id } }
+    );
+
+    await Category.updateMany(
+      { organization: org._id },
+      { $pull: { members: req.user._id } }
+    );
+
+    await logActivity(org._id, 'join', req.user._id, {
+      meta: `${req.user.name} left the organization`
+    });
+
+    res.status(200).json({ message: `You have left "${org.name}"` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 // @route DELETE /api/org/:orgId
 export const deleteOrganization = async (req, res) => {
   try {

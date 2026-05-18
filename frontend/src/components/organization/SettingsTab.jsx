@@ -21,6 +21,8 @@ const SettingsTab = ({
   onToggleMember,
   onBulkRoleChange,
   onUpdateOrgName,
+   isAdmin,  
+    onLeaveOrg, 
   onDeleteOrg,
 }) => {
   const [editingName, setEditingName] = useState(false);
@@ -298,18 +300,34 @@ const SettingsTab = ({
 
       {/* Danger Zone */}
       <div className="bg-gray-900 border border-red-900/50 rounded-2xl p-6">
-        <h3 className="text-red-400 font-semibold text-lg mb-1">Danger Zone</h3>
-        <p className="text-gray-500 text-sm mb-5">
-          Permanently delete this organization and all its files. This cannot be
-          undone.
-        </p>
-        <button
-          onClick={onDeleteOrg}
-          className="px-5 py-2.5 text-sm bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg transition font-medium"
-        >
-          🗑️ Delete Organization
-        </button>
-      </div>
+  <h3 className="text-red-400 font-semibold text-lg mb-1">Danger Zone</h3>
+  {isAdmin ? (
+    <>
+      <p className="text-gray-500 text-sm mb-5">
+        Permanently delete this organization and all its files. This cannot be undone.
+      </p>
+      <button
+        onClick={onDeleteOrg}
+        className="px-5 py-2.5 text-sm bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg transition font-medium"
+      >
+        🗑️ Delete Organization
+      </button>
+    </>
+  ) : (
+    <>
+      <p className="text-gray-500 text-sm mb-5">
+        Leave this organization. You will lose access to all its files and categories.
+        You can rejoin later with the join code.
+      </p>
+      <button
+        onClick={onLeaveOrg}
+        className="px-5 py-2.5 text-sm bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg transition font-medium"
+      >
+        🚪 Leave Organization
+      </button>
+    </>
+  )}
+</div>
     </div>
   );
 };

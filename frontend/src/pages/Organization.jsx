@@ -408,6 +408,21 @@ const Organization = () => {
     }
   };
 
+  const handleLeaveOrg = async () => {
+    if (
+      !confirm(
+        `Leave "${org.name}"? You will lose access to all files. You can rejoin with the join code.`,
+      )
+    )
+      return;
+    try {
+      await axios.delete(`/org/${orgId}/leave`);
+      navigate("/dashboard");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to leave organization");
+    }
+  };
+
   const toggleMemberSelection = (userId) => {
     if (userId === currentUserId) return;
     setSelectedMembers((prev) =>
@@ -522,7 +537,7 @@ const Organization = () => {
   const filteredFiles = getFilteredFiles();
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col">
+    <div className="h-screen bg-gray-950 flex flex-col  overlfow-hidden">
       <Navbar />
 
       <div className="flex flex-1 overflow-hidden">
@@ -923,7 +938,7 @@ const Organization = () => {
             {/* ── ACTIVITY LOG TAB ── */}
             {activeTab === "activity" && isAdminUser && (
               <div>
-                <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+                <div className="sticky top-25 z-10 bg-gray-950/90 backdrop-blur flex items-center justify-between    mb-5 flex-wrap gap-3">
                   <h3 className="text-white font-semibold text-lg">
                     Activity Log
                   </h3>
@@ -1059,7 +1074,7 @@ const Organization = () => {
                 )}
               </div>
             )}
-            //trash
+
             {/* ── TRASH TAB ── */}
             {activeTab === "trash" && isAdminUser && (
               <div>
@@ -1179,31 +1194,34 @@ const Organization = () => {
               </div>
             )}
             {/* ── SETTINGS TAB ── */}
-            {activeTab === "settings" && isAdminUser && (
-              <SettingsTab
-                getRoleBadge={getRoleBadge}
-                members={members}
-                categories={categories}
-                files={files}
-                org={org}
-                currentUserId={currentUserId}
-                allowAllUploads={allowAllUploads}
-                selectedMembers={selectedMembers}
-                bulkRole={bulkRole}
-                updatingRole={updatingRole}
-                roleSuccess={roleSuccess}
-                onToggleUploadAccess={handleToggleUploadAccess}
-                onRoleChange={handleRoleChange}
-                onBulkRole={handleBulkRole}
-                onRemoveMember={handleRemoveMember}
-                onSelectAll={selectAllMembers}
-                onDeselectAll={() => setSelectedMembers([])}
-                onToggleMember={toggleMemberSelection}
-                onBulkRoleChange={setBulkRole}
-                onDeleteOrg={handleDeleteOrg}
-                onUpdateOrgName={handleUpdateOrgName}
-              />
-            )}
+            {activeTab ===
+              "settings"&&(
+                <SettingsTab
+                  getRoleBadge={getRoleBadge}
+                  members={members}
+                  categories={categories}
+                  files={files}
+                  org={org}
+                  currentUserId={currentUserId}
+                  allowAllUploads={allowAllUploads}
+                  selectedMembers={selectedMembers}
+                  bulkRole={bulkRole}
+                  updatingRole={updatingRole}
+                  roleSuccess={roleSuccess}
+                  isAdmin={isAdminUser}
+                  onLeaveOrg={handleLeaveOrg}
+                  onToggleUploadAccess={handleToggleUploadAccess}
+                  onRoleChange={handleRoleChange}
+                  onBulkRole={handleBulkRole}
+                  onRemoveMember={handleRemoveMember}
+                  onSelectAll={selectAllMembers}
+                  onDeselectAll={() => setSelectedMembers([])}
+                  onToggleMember={toggleMemberSelection}
+                  onBulkRoleChange={setBulkRole}
+                  onDeleteOrg={handleDeleteOrg}
+                  onUpdateOrgName={handleUpdateOrgName}
+                />
+              )}
           </div>
         </main>
       </div>
