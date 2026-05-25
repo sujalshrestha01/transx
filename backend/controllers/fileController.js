@@ -1,19 +1,20 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+// import fs from "fs";
+// import path from "path";
+// import { fileURLToPath } from "url";
 import crypto from "crypto";
+import { uploadToB2, downloadFromB2, deleteFromB2 } from "../utils/b2Storage.js";
 import File from "../models/File.js";
 import Organization from "../models/Organization.js";
 import { encryptFile, decryptFile } from "../utils/encryption.js";
 import { logActivity } from "../utils/activityLogger.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const uploadDir = path.join(__dirname, "..", "uploads");
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// const uploadDir = path.join(__dirname, "..", "uploads");
 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
+// if (!fs.existsSync(uploadDir)) {
+//   fs.mkdirSync(uploadDir);
+// }
 
 // Helper — get member's role in org
 const getMemberRole = (org, userId) => {
@@ -73,8 +74,9 @@ export const uploadFile = async (req, res) => {
 
     const encryptedBuffer = encryptFile(req.file.buffer);
     const storedName = crypto.randomBytes(16).toString("hex") + ".enc";
-    const filePath = path.join(uploadDir, storedName);
-    fs.writeFileSync(filePath, encryptedBuffer);
+    // const filePath = path.join(uploadDir, storedName);
+    // fs.writeFileSync(filePath, encryptedBuffer);
+    await uploadToB2(encryptedBuffer, storedName, "application/octet-stream");
 
     const file = await File.create({
       originalName: req.file.originalname,
@@ -197,11 +199,13 @@ export const downloadFile = async (req, res) => {
 
     // Admin always has access
     if (role === "admin") {
-      const filePath = path.join(uploadDir, file.storedName);
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ message: "File not found on server" });
-      }
-      const decryptedBuffer = decryptFile(fs.readFileSync(filePath));
+      // const filePath = path.join(uploadDir, file.storedName);
+      // if (!fs.existsSync(filePath)) {
+      //   return res.status(404).json({ message: "File not found on server" });
+      // }
+      // const decryptedBuffer = decryptFile(fs.readFileSync(filePath));
+      const encryptedBuffer = await downloadFromB2(file.storedName);
+const decryptedBuffer = decryptFile(encryptedBuffer);
       file.accessLog.push({ user: req.user._id });
       await file.save();
       res.setHeader(
@@ -234,12 +238,13 @@ export const downloadFile = async (req, res) => {
         .json({ message: "You do not have access to this file" });
     }
 
-    const filePath = path.join(uploadDir, file.storedName);
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: "File not found on server" });
-    }
+    // const filePath = path.join(uploadDir, file.storedName);
+    // if (!fs.existsSync(filePath)) {
+    //   return res.status(404).json({ message: "File not found on server" });
+    // }
 
-    const encryptedBuffer = fs.readFileSync(filePath);
+    // const encryptedBuffer = fs.readFileSync(filePath);
+    const encryptedBuffer = await downloadFromB2(file.storedName);
     const decryptedBuffer = decryptFile(encryptedBuffer);
 
     file.accessLog.push({ user: req.user._id });
@@ -372,8 +377,9 @@ export const deleteFile = async (req, res) => {
     if (trashedFiles.length > 10) {
       const toDelete = trashedFiles.slice(10);
       for (const f of toDelete) {
-        const filePath = path.join(uploadDir, f.storedName);
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        // const filePath = path.join(uploadDir, f.storedName);
+        // if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+         try { await deleteFromB2(f.storedName); } catch (_) {}
         await f.deleteOne();
       }
     }
@@ -619,8 +625,9 @@ export const permanentDelete = async (req, res) => {
         .json({ message: "Only admin can permanently delete files" });
     }
 
-    const filePath = path.join(uploadDir, file.storedName);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    // const filePath = path.join(uploadDir, file.storedName);
+    // if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    try { await deleteFromB2(file.storedName); } catch (_) {}
     await file.deleteOne();
 
     res.status(200).json({ message: "File permanently deleted" });
