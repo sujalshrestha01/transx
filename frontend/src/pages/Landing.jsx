@@ -1,12 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
-/* ─────────────────────────────────────────────
-   TransX Landing  —  "Vault Noir" aesthetic
-   Dark-first, monospace accents, cinematic glows,
-   micro-animations, noise-texture atmosphere.
-───────────────────────────────────────────── */
-
 const useScrollY = () => {
   const [y, setY] = useState(0);
   useEffect(() => {
@@ -17,7 +11,6 @@ const useScrollY = () => {
   return y;
 };
 
-/* Noise SVG data-uri for grain overlay */
 const NOISE =
   "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E\")";
 
@@ -27,22 +20,17 @@ const Landing = () => {
   const scrollY = useScrollY();
   const heroRef = useRef(null);
 
-  /* Light / dark token map */
+  // Colors dynamically mapping to CSS variables to feed clean Tailwind classes
   const tk = {
-    bg:        dark ? '#08090d' : '#f4f4f0',
-    surface:   dark ? '#0f1017' : '#ffffff',
-    card:      dark ? '#13141c' : '#fafafa',
-    border:    dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)',
-    borderHov: dark ? 'rgba(99,179,237,0.5)'  : 'rgba(37,99,235,0.4)',
-    text:      dark ? '#eef0f5' : '#0f1017',
-    sub:       dark ? '#6b7280' : '#6b7280',
-    muted:     dark ? '#3d4050' : '#c4c7cc',
-    accent:    '#3b82f6',
-    accentBr:  '#60a5fa',
-    glow:      dark ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.08)',
+    bg:       dark ? 'bg-[#08090d]' : 'bg-[#f4f4f0]',
+    surface:  dark ? 'bg-[#0f1017]' : 'bg-[#ffffff]',
+    card:     dark ? 'bg-[#13141c]' : 'bg-[#fafafa]',
+    text:     dark ? 'text-[#eef0f5]' : 'text-[#0f1017]',
+    sub:      dark ? 'text-[#6b7280]' : 'text-[#6b7280]',
+    muted:    dark ? 'text-[#3d4050]' : 'text-[#c4c7cc]',
+    border:   dark ? 'border-white/5' : 'border-black/5',
+    borderHov:dark ? 'hover:border-blue-400/50' : 'hover:border-blue-600/40',
   };
-
-  const css = (obj) => Object.assign({}, obj);
 
   const features = [
     { icon: '⬡', title: 'AES-256 Encryption',      desc: 'Every file encrypted client-side before hitting our servers. Zero-knowledge by design.' },
@@ -75,332 +63,209 @@ const Landing = () => {
     },
   ];
 
-  /* ─── style helpers ─── */
-  const navStyle = css({
-    position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-    background: scrollY > 20
-      ? dark ? 'rgba(8,9,13,0.85)' : 'rgba(244,244,240,0.85)'
-      : 'transparent',
-    backdropFilter: scrollY > 20 ? 'blur(12px)' : 'none',
-    borderBottom: scrollY > 20 ? `1px solid ${tk.border}` : '1px solid transparent',
-    transition: 'all 0.3s ease',
-  });
-
-  const glowOrb = (top, left, size, opacity = 1) => ({
-    position: 'absolute', top, left,
-    width: size, height: size,
-    background: `radial-gradient(circle, rgba(59,130,246,${0.18 * opacity}) 0%, transparent 70%)`,
-    borderRadius: '50%', pointerEvents: 'none', filter: 'blur(40px)',
-  });
-
   return (
-    <div style={{ background: tk.bg, minHeight: '100vh', fontFamily: "'DM Mono', 'Fira Code', monospace", transition: 'background 0.3s', position: 'relative', overflow: 'hidden' }}>
-
-      {/* Google Font */}
+    <div className={`${tk.bg} ${tk.text} min-h-screen antialiased transition-colors duration-300 relative overflow-hidden font-mono`}>
+      
+      {/* Embedded Global Styles & Custom Utilities */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&display=swap');
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        ::selection { background: rgba(59,130,246,0.35); color: #fff; }
-
-        html { scroll-behavior: smooth; }
-
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(24px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; } to { opacity: 1; }
-        }
-        @keyframes pulse-ring {
-          0%   { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
-          70%  { transform: scale(1);    box-shadow: 0 0 0 12px rgba(59,130,246,0); }
-          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-        }
-        @keyframes scanline {
-          0%   { background-position: 0 0; }
-          100% { background-position: 0 100%; }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50%       { transform: translateY(-8px); }
-        }
-
-        .hero-title { font-family: 'Syne', sans-serif; animation: fadeUp 0.9s ease both; }
-        .hero-sub   { animation: fadeUp 0.9s 0.15s ease both; }
-        .hero-cta   { animation: fadeUp 0.9s 0.3s ease both; }
-        .hero-stats { animation: fadeUp 0.9s 0.45s ease both; }
-
-        .feature-card {
-          border: 1px solid var(--border);
-          border-radius: 16px;
-          padding: 28px;
-          transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
-          cursor: default;
-        }
-        .feature-card:hover {
-          border-color: rgba(99,179,237,0.5) !important;
-          transform: translateY(-3px);
-          box-shadow: 0 12px 40px rgba(59,130,246,0.1);
-        }
-
-        .step-card {
-          border: 1px solid var(--border);
-          border-radius: 16px;
-          padding: 28px 32px;
-          display: flex; align-items: flex-start; gap: 24px;
-          transition: border-color 0.25s, transform 0.25s;
-        }
-        .step-card:hover {
-          border-color: rgba(99,179,237,0.4) !important;
-          transform: translateX(4px);
-        }
-
-        .price-card {
-          border-radius: 20px;
-          padding: 36px;
-          display: flex; flex-direction: column;
-          transition: transform 0.25s, box-shadow 0.25s;
-        }
-        .price-card:hover { transform: translateY(-4px); }
-        .price-card.pro:hover { box-shadow: 0 24px 60px rgba(59,130,246,0.25); }
-
-        .btn-primary {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 14px 28px;
-          background: #3b82f6;
-          color: #fff; font-weight: 600; font-size: 13px;
-          border-radius: 10px; border: none; cursor: pointer;
-          transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-          text-decoration: none; letter-spacing: 0.02em;
-          font-family: 'DM Mono', monospace;
-          animation: pulse-ring 2.5s infinite;
-        }
-        .btn-primary:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(59,130,246,0.35); }
-
-        .btn-ghost {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 14px 28px;
-          color: inherit; font-weight: 500; font-size: 13px;
-          border-radius: 10px; border: 1px solid var(--border);
-          cursor: pointer; transition: border-color 0.2s, color 0.2s;
-          text-decoration: none; letter-spacing: 0.02em;
-          font-family: 'DM Mono', monospace; background: transparent;
-        }
-        .btn-ghost:hover { border-color: rgba(99,179,237,0.5); color: #3b82f6; }
-
-        .nav-link {
-          font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
-          color: var(--sub); text-decoration: none;
-          transition: color 0.2s; font-family: 'DM Mono', monospace;
-        }
-        .nav-link:hover { color: #3b82f6; }
-
-        .badge {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 6px 16px;
-          border: 1px solid rgba(59,130,246,0.25);
-          border-radius: 999px;
-          font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
-          color: #60a5fa; background: rgba(59,130,246,0.08);
-          font-family: 'DM Mono', monospace;
-          animation: fadeIn 0.6s ease both;
-        }
-
-        .section-label {
-          font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
-          color: #3b82f6; font-family: 'DM Mono', monospace;
-          margin-bottom: 12px; display: block;
-        }
-
-        .section-title {
-          font-family: 'Syne', sans-serif;
-          font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;
-        }
-
-        .check-item {
-          display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
-          font-size: 13px;
-        }
-        .check-icon { color: #3b82f6; font-size: 12px; flex-shrink: 0; }
-
-        .grain {
-          position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.35;
-          background-image: ${NOISE};
-        }
-
-        .glow-line {
-          height: 1px;
-          background: linear-gradient(to right, transparent, rgba(59,130,246,0.4), transparent);
-        }
-
-        .mono-num {
-          font-family: 'DM Mono', monospace;
-          font-size: 32px; font-weight: 300;
-          color: rgba(59,130,246,0.2); flex-shrink: 0; width: 44px; text-align: right;
-        }
-
-        .terminal-badge {
-          display: inline-block;
-          padding: 2px 8px; border-radius: 4px;
-          background: rgba(59,130,246,0.12);
-          color: #60a5fa;
-          font-size: 10px; letter-spacing: 0.1em;
-          font-family: 'DM Mono', monospace;
-        }
-
-        .float-card { animation: float 4s ease-in-out infinite; }
-
-        @media (max-width: 768px) {
-          .hero-title { font-size: clamp(36px, 9vw, 64px) !important; }
-          .grid-3 { grid-template-columns: 1fr !important; }
-          .grid-2 { grid-template-columns: 1fr !important; }
-          .hide-mobile { display: none !important; }
+        
+        .font-syne { font-family: 'Syne', sans-serif; }
+        .font-mono { font-family: 'DM Mono', 'Fira Code', monospace; }
+        
+        /* Smooth Custom Dropdown Animation */
+        .dropdown-transition {
+          transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, visibility 0.25s;
         }
       `}</style>
 
-      {/* CSS vars bridge */}
-      <style>{`:root { --border: ${tk.border}; --sub: ${tk.sub}; }`}</style>
-
       {/* Grain overlay */}
-      <div className="grain" />
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.35]" style={{ backgroundImage: NOISE }} />
 
       {/* ── NAVBAR ── */}
-      <nav style={navStyle}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <nav 
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${
+          scrollY > 20 
+            ? `${dark ? 'bg-[#08090d]/85' : 'bg-[#f4f4f0]/85'} backdrop-blur-md ${dark ? 'border-white/5' : 'border-black/5'}` 
+            : 'bg-transparent border-transparent'
+        }`}
+      >
+        <div className="max-w-[1100px] mx-auto px-6">
+          <div className="h-16 flex items-center justify-between">
 
-          {/* Logo */}
-          <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 800, color: tk.text, letterSpacing: '-0.02em' }}>
-            Trans<span style={{ color: tk.accent }}>X</span>
-            <span style={{ marginLeft: 8, fontSize: 9, letterSpacing: '0.15em', color: tk.muted, verticalAlign: 'middle', textTransform: 'uppercase' }}>secure</span>
-          </span>
+            {/* Logo */}
+            <span className="font-syne text-xl font-extrabold tracking-tight select-none">
+              Trans<span className="text-blue-500">X</span>
+              <span className={`ml-2 text-[9px] tracking-[0.15em] ${dark ? 'text-[#3d4050]' : 'text-[#c4c7cc]'} align-middle uppercase font-mono font-medium`}>secure</span>
+            </span>
 
-          {/* Nav links */}
-          <div className="hide-mobile" style={{ display: 'flex', gap: 36 }}>
-            {['Features', 'How It Works', 'Pricing'].map(item => (
-              <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className="nav-link">{item}</a>
-            ))}
+            {/* Nav links — Desktop */}
+            <div className="hidden md:flex items-center gap-9">
+              {['Features', 'How It Works', 'Pricing'].map(item => (
+                <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className={`text-xs tracking-wider uppercase font-medium ${dark ? 'text-gray-400 hover:text-blue-500' : 'text-gray-500 hover:text-blue-600'} transition-colors duration-200`}>
+                  {item}
+                </a>
+              ))}
+            </div>
+
+            {/* Right Control Actions */}
+            <div className="flex items-center gap-2.5">
+              <button
+                onClick={() => setDark(d => !d)}
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center bg-transparent cursor-pointer text-sm transition-colors duration-200 ${dark ? 'border-white/5 text-gray-400 hover:text-gray-200' : 'border-black/5 text-gray-500 hover:text-gray-900'}`}
+              >
+                {dark ? '☀️' : '🌙'}
+              </button>
+
+              {/* Layout Container for Desktop Auth Buttons */}
+              <div className="hidden sm:flex items-center gap-2.5">
+                <Link to="/login" className={`text-xs tracking-wider uppercase font-medium px-4 py-2 rounded-lg border transition-all duration-200 ${dark ? 'border-white/5 text-gray-400 hover:text-white' : 'border-black/5 text-gray-500 hover:text-black'}`}>Login</Link>
+                <Link to="/register" className={`text-xs tracking-wider font-semibold px-4.5 py-2 rounded-lg transition-all duration-200 shadow-md ${dark ? 'bg-[#eef0f5] text-[#08090d] hover:bg-white' : 'bg-[#0f1017] text-white hover:opacity-90'} active:scale-95`}>Get Started</Link>
+              </div>
+
+              {/* Hamburger Menu Icon */}
+              <button
+                onClick={() => setMenuOpen(o => !o)}
+                className={`md:hidden w-9 h-9 rounded-lg border flex items-center justify-center bg-transparent cursor-pointer text-lg transition-colors duration-200 ${dark ? 'border-white/5 text-gray-400' : 'border-black/5 text-gray-500'}`}
+              >
+                {menuOpen ? '✕' : '≡'}
+              </button>
+            </div>
           </div>
+        </div>
 
-          {/* Right */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button
-              onClick={() => setDark(d => !d)}
-              style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${tk.border}`, background: 'transparent', cursor: 'pointer', fontSize: 15, transition: 'border-color 0.2s', color: tk.sub, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >{dark ? '○' : '●'}</button>
-
-            <Link to="/login" className="nav-link" style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${tk.border}`, transition: 'border-color 0.2s' }}>Login</Link>
-            <Link to="/register" className="btn-primary" style={{ padding: '8px 18px', fontSize: 12, animation: 'none' }}>Get Started</Link>
+        {/* Mobile Dropdown Menu — Beautiful Custom Reveal Transition */}
+        <div
+          className={`dropdown-transition absolute top-16 left-0 right-0 p-6 flex flex-col gap-4 border-b md:hidden z-40 ${
+            menuOpen ? 'translate-y-0 opacity-100 visible' : '-translate-y-2 opacity-0 visibility-hidden pointer-events-none'
+          } ${dark ? 'bg-[#08090d]/98 border-white/5' : 'bg-[#f4f4f0]/98 border-black/5'} backdrop-blur-xl`}
+        >
+          {['Features', 'How It Works', 'Pricing'].map(item => (
+            <a
+              key={item}
+              href={`#${item.toLowerCase().replace(/ /g, '-')}`}
+              className={`text-sm tracking-wide py-2.5 border-b uppercase font-medium ${dark ? 'border-white/5 text-gray-400 hover:text-blue-500' : 'border-black/5 text-gray-500 hover:text-blue-600'}`}
+              onClick={() => setMenuOpen(false)}
+            >
+              {item}
+            </a>
+          ))}
+          <div className="flex flex-col gap-2.5 mt-2 sm:hidden">
+            <Link to="/login" onClick={() => setMenuOpen(false)} className={`text-xs tracking-wider uppercase text-center font-medium py-3 rounded-lg border ${dark ? 'border-white/5 text-gray-400' : 'border-black/5 text-gray-500'}`}>Login</Link>
+            <Link to="/register" onClick={() => setMenuOpen(false)} className={`text-xs tracking-wider text-center font-semibold py-3 rounded-lg ${dark ? 'bg-[#eef0f5] text-[#08090d]' : 'bg-[#0f1017] text-white'}`}>Get Started</Link>
           </div>
         </div>
       </nav>
 
       {/* ── HERO ── */}
-      <section ref={heroRef} style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '120px 24px 80px', overflow: 'hidden' }}>
+      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center px-6 pt-28 pb-20 overflow-hidden">
+        
+        {/* Glow Orbs */}
+        <div className="absolute -top-[10%] left-[10%] w-[600px] h-[600px] rounded-full pointer-events-none filter blur-[40px]" style={{ background: `radial-gradient(circle, rgba(59,130,246,${dark ? 0.126 : 0.054}) 0%, transparent 70%)` }} />
+        <div className="absolute top-[20%] left-[60%] w-[400px] h-[400px] rounded-full pointer-events-none filter blur-[40px]" style={{ background: `radial-gradient(circle, rgba(59,130,246,${dark ? 0.09 : 0.04}) 0%, transparent 70%)` }} />
 
-        {/* Background glows */}
-        <div style={glowOrb('-10%', '10%', '600px', 0.7)} />
-        <div style={glowOrb('20%', '60%', '400px', 0.5)} />
+        {/* Technical Grid Texture */}
+        <div 
+          className="absolute inset-0 pointer-events-none" 
+          style={{
+            backgroundImage: `linear-gradient(${dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} 1px, transparent 1px), linear-gradient(90deg, ${dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} 1px, transparent 1px)`,
+            backgroundSize: '60px 60px',
+          }} 
+        />
 
-        {/* Grid texture */}
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          backgroundImage: `linear-gradient(${tk.border} 1px, transparent 1px), linear-gradient(90deg, ${tk.border} 1px, transparent 1px)`,
-          backgroundSize: '60px 60px', opacity: dark ? 0.6 : 0.3,
-        }} />
-
-        <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-
-          <div style={{ marginBottom: 24 }}>
-            <span className="badge">
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse-ring 2s infinite' }} />
+        <div className="max-w-[800px] mx-auto text-center relative z-10">
+          <div className="mb-6 animate-[fadeIn_0.6s_ease_both]">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 border border-blue-500/25 rounded-full text-[11px] tracking-wider uppercase text-blue-400 bg-blue-500/10">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
               AES-256 · End-to-End Encrypted
             </span>
           </div>
 
-          <h1 className="hero-title" style={{ fontSize: 'clamp(48px, 8vw, 80px)', fontWeight: 800, color: tk.text, letterSpacing: '-0.03em', lineHeight: 1.05, marginBottom: 24 }}>
+          <h1 className="font-syne text-[clamp(36px,7.5vw,76px)] font-extrabold tracking-tight leading-[1.05] mb-6 animate-[fadeUp_0.9s_ease_both] ${tk.text}">
             Share Files<br />
-            <span style={{ color: tk.accent, position: 'relative' }}>
+            <span className="text-blue-500 relative inline-block">
               Without Fear
-              <svg style={{ position: 'absolute', bottom: -4, left: 0, width: '100%', height: 8, overflow: 'visible' }} viewBox="0 0 400 8">
-                <path d="M0 6 Q100 0 200 6 Q300 12 400 6" stroke={tk.accent} strokeWidth="2" fill="none" opacity="0.5" />
+              <svg className="absolute -bottom-1 left-0 w-full h-2 overflow-visible" viewBox="0 0 400 8">
+                <path d="M0 6 Q100 0 200 6 Q300 12 400 6" stroke="#3b82f6" strokeWidth="2" fill="none" className="opacity-50" />
               </svg>
             </span>
           </h1>
 
-          <p className="hero-sub" style={{ fontSize: 16, lineHeight: 1.75, color: tk.sub, maxWidth: 520, margin: '0 auto 40px', fontFamily: "'DM Mono', monospace", fontWeight: 300 }}>
+          <p className={`text-sm md:text-base leading-relaxed ${tk.sub} max-w-[520px] mx-auto mb-10 font-light font-mono animate-[fadeUp_0.9s_0.15s_ease_both]`}>
             TransX gives your organization a private encrypted vault — upload, organize,
             and share files with surgical control over who sees what.
           </p>
 
-          <div className="hero-cta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <Link to="/register" className="btn-primary">
-              Start for Free <span style={{ fontSize: 16 }}>→</span>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-md mx-auto sm:max-w-none animate-[fadeUp_0.9s_0.3s_ease_both]">
+            <Link to="/register" className="inline-flex items-center justify-center gap-1.5 px-7 py-3.5 bg-blue-500 text-white font-semibold text-xs rounded-lg tracking-wide hover:bg-blue-600 transition-all duration-200 shadow-lg shadow-blue-500/20 hover:-translate-y-0.5 active:translate-y-0">
+              Start for Free <span className="text-base font-normal">→</span>
             </Link>
-            <a href="#how-it-works" className="btn-ghost" style={{ color: tk.text }}>
+            <a href="#how-it-works" className={`inline-flex items-center justify-center gap-1.5 px-7 py-3.5 rounded-lg font-medium text-xs border tracking-wide transition-all duration-200 ${dark ? 'border-white/5 text-[#eef0f5] hover:border-blue-400/40' : 'border-black/5 text-[#0f1017] hover:border-blue-600/40'} hover:text-blue-500`}>
               See How It Works
             </a>
           </div>
 
-          {/* Stats */}
-          <div className="hero-stats" style={{ marginTop: 64, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24, maxWidth: 420, margin: '64px auto 0', borderTop: `1px solid ${tk.border}`, paddingTop: 40 }}>
+          {/* Stats Metrics Display */}
+          <div className={`mt-16 grid grid-cols-3 gap-3 md:gap-6 max-w-[420px] mx-auto border-t pt-10 ${dark ? 'border-white/5' : 'border-black/5'} animate-[fadeUp_0.9s_0.45s_ease_both]`}>
             {[{ value: 'AES-256', label: '// encryption' }, { value: '100%', label: '// private' }, { value: 'Free', label: '// to start' }].map(({ value, label }) => (
               <div key={label}>
-                <p style={{ fontFamily: "'Syne', sans-serif", fontSize: 22, fontWeight: 700, color: tk.text, marginBottom: 4 }}>{value}</p>
-                <p style={{ fontSize: 11, color: tk.muted, letterSpacing: '0.05em' }}>{label}</p>
+                <p className={`font-syne text-lg md:text-2xl font-bold mb-1 ${tk.text}`}>{value}</p>
+                <p className={`text-[10px] tracking-wide ${dark ? 'text-[#3d4050]' : 'text----'}`}>{label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Glow Line Divider Helper */}
+      <div className="h-[1px] max-w-[1100px] mx-auto bg-gradient-to-right from-transparent via-blue-500/20 to-transparent my-16" />
+
       {/* ── FEATURES ── */}
-      <section id="features" style={{ padding: '100px 24px', position: 'relative' }}>
-        <div className="glow-line" style={{ marginBottom: 80 }} />
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 60 }}>
-            <span className="section-label">// features</span>
-            <h2 className="section-title" style={{ fontSize: 'clamp(28px,5vw,44px)', color: tk.text, marginBottom: 16 }}>Everything Your Team Needs</h2>
-            <p style={{ color: tk.sub, fontSize: 14, maxWidth: 480, margin: '0 auto', lineHeight: 1.7, fontWeight: 300 }}>
+      <section id="features" className="py-20 px-6 relative">
+        <div className="max-w-[1100px] mx-auto">
+          <div className="text-center mb-14">
+            <span className="text-[10px] tracking-[0.2em] uppercase text-blue-500 font-medium mb-3 block">// features</span>
+            <h2 className={`font-syne text-3xl md:text-4xl font-extrabold tracking-tight mb-4 ${tk.text}`}>Everything Your Team Needs</h2>
+            <p className={`${tk.sub} text-sm max-w-[480px] mx-auto leading-relaxed font-light`}>
               Built for organizations that treat data security as a first-class concern.
             </p>
           </div>
 
-          <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
-            {features.map(({ icon, title, desc }, i) => (
-              <div key={title} className="feature-card" style={{ background: tk.card, animationDelay: `${i * 80}ms` }}>
-                <div style={{ fontSize: 22, marginBottom: 16, color: tk.accent, fontFamily: 'monospace' }}>{icon}</div>
-                <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 15, color: tk.text, marginBottom: 8, letterSpacing: '-0.01em' }}>{title}</h3>
-                <p style={{ fontSize: 13, color: tk.sub, lineHeight: 1.7, fontWeight: 300 }}>{desc}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {features.map(({ icon, title, desc }) => (
+              <div key={title} className={`${tk.card} border ${tk.border} ${tk.borderHov} rounded-2xl p-7 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/5`}>
+                <div className="text-xl mb-4 text-blue-500 font-mono">{icon}</div>
+                <h3 className={`font-syne font-bold text-[15px] mb-2 tracking-tight ${tk.text}`}>{title}</h3>
+                <p className={`${tk.sub} text-[13px] leading-relaxed font-light`}>{desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      <div className="h-[1px] max-w-[1100px] mx-auto bg-gradient-to-right from-transparent via-blue-500/20 to-transparent my-16" />
+
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" style={{ padding: '100px 24px', position: 'relative' }}>
-        <div className="glow-line" style={{ marginBottom: 80 }} />
-        <div style={{ maxWidth: 680, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 60 }}>
-            <span className="section-label">// how it works</span>
-            <h2 className="section-title" style={{ fontSize: 'clamp(28px,5vw,44px)', color: tk.text, marginBottom: 16 }}>Up and Running in Minutes</h2>
-            <p style={{ color: tk.sub, fontSize: 14, maxWidth: 400, margin: '0 auto', lineHeight: 1.7, fontWeight: 300 }}>
+      <section id="how-it-works" className="py-20 px-6 relative">
+        <div className="max-w-[680px] mx-auto">
+          <div className="text-center mb-14">
+            <span className="text-[10px] tracking-[0.2em] uppercase text-blue-500 font-medium mb-3 block">// how it works</span>
+            <h2 className={`font-syne text-3xl md:text-4xl font-extrabold tracking-tight mb-4 ${tk.text}`}>Up and Running in Minutes</h2>
+            <p className={`${tk.sub} text-sm max-w-[400px] mx-auto leading-relaxed font-light`}>
               No complicated setup. Create, invite, and share.
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="flex flex-col gap-3">
             {steps.map(({ number, title, desc }, i) => (
-              <div key={number} className="step-card" style={{ background: tk.card, position: 'relative' }}>
-                <span className="mono-num">{number}</span>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 15, color: tk.text, marginBottom: 4, letterSpacing: '-0.01em' }}>{title}</h3>
-                  <p style={{ fontSize: 13, color: tk.sub, lineHeight: 1.7, fontWeight: 300 }}>{desc}</p>
+              <div key={number} className={`${tk.card} border ${tk.border} hover:border-blue-500/30 rounded-2xl p-6 md:p-8 flex items-start gap-5 md:gap-6 relative group transition-all duration-200 hover:translate-x-1`}>
+                <span className="font-mono text-3xl font-light text-blue-500/20 shrink-0 w-11 text-right">{number}</span>
+                <div className="grow">
+                  <h3 className={`font-syne font-bold text-[15px] mb-1 tracking-tight ${tk.text}`}>{title}</h3>
+                  <p className={`${tk.sub} text-[13px] leading-relaxed font-light`}>{desc}</p>
                 </div>
                 {i < steps.length - 1 && (
-                  <div style={{ position: 'absolute', left: 62, bottom: -18, color: tk.muted, fontSize: 18, zIndex: 1 }}>↓</div>
+                  <div className={`absolute left-14 -bottom-[15px] text-lg font-bold z-10 transition-colors ${dark ? 'text-[#3d4050]' : 'text-[#c4c7cc]'}`}>↓</div>
                 )}
               </div>
             ))}
@@ -408,109 +273,105 @@ const Landing = () => {
         </div>
       </section>
 
+      <div className="h-[1px] max-w-[1100px] mx-auto bg-gradient-to-right from-transparent via-blue-500/20 to-transparent my-16" />
+
       {/* ── PRICING ── */}
-      <section id="pricing" style={{ padding: '100px 24px 80px', position: 'relative' }}>
-        <div className="glow-line" style={{ marginBottom: 80 }} />
-        <div style={{ maxWidth: 760, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 60 }}>
-            <span className="section-label">// pricing</span>
-            <h2 className="section-title" style={{ fontSize: 'clamp(28px,5vw,44px)', color: tk.text, marginBottom: 16 }}>Simple, Honest Pricing</h2>
-            <p style={{ color: tk.sub, fontSize: 14, maxWidth: 380, margin: '0 auto', lineHeight: 1.7, fontWeight: 300 }}>
+      <section id="pricing" className="pt-20 pb-24 px-6 relative">
+        <div className="max-w-[760px] mx-auto">
+          <div className="text-center mb-14">
+            <span className="text-[10px] tracking-[0.2em] uppercase text-blue-500 font-medium mb-3 block">// pricing</span>
+            <h2 className={`font-syne text-3xl md:text-4xl font-extrabold tracking-tight mb-4 ${tk.text}`}>Simple, Honest Pricing</h2>
+            <p className={`${tk.sub} text-sm max-w-[380px] mx-auto leading-relaxed font-light`}>
               Start free. Upgrade when your team needs more.
             </p>
           </div>
 
-          <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 20 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`price-card ${plan.pro ? 'pro' : ''}`}
-                style={{
-                  background: plan.pro
-                    ? `linear-gradient(135deg, #1d4ed8 0%, #2563eb 60%, #3b82f6 100%)`
-                    : tk.card,
-                  border: `1px solid ${plan.pro ? 'rgba(59,130,246,0.6)' : tk.border}`,
-                }}
+                className={`rounded-2xl p-8 md:p-9 flex flex-col transition-all duration-300 border hover:-translate-y-1 ${
+                  plan.pro
+                    ? 'bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 border-blue-500/60 shadow-2xl shadow-blue-500/20'
+                    : `${tk.card} ${tk.border}`
+                }`}
               >
                 {plan.pro && (
-                  <div style={{ marginBottom: 16 }}>
-                    <span className="terminal-badge" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff' }}>★ most popular</span>
+                  <div className="mb-4">
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] tracking-wider uppercase font-semibold bg-white/15 text-white">★ most popular</span>
                   </div>
                 )}
 
-                <div style={{ marginBottom: 6 }}>
-                  <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: plan.pro ? 'rgba(255,255,255,0.6)' : tk.muted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{plan.name}</span>
+                <div className="mb-1.5">
+                  <span className={`font-syne text-xs font-bold tracking-widest uppercase ${plan.pro ? 'text-white/60' : dark ? 'text-[#3d4050]' : 'text-[#c4c7cc]'}`}>{plan.name}</span>
                 </div>
 
-                <div style={{ marginBottom: 8 }}>
-                  <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 36, fontWeight: 800, color: plan.pro ? '#fff' : tk.text, letterSpacing: '-0.02em' }}>{plan.price}</span>
-                  <span style={{ fontSize: 12, color: plan.pro ? 'rgba(255,255,255,0.5)' : tk.muted, marginLeft: 6 }}>/ {plan.period}</span>
+                <div className="mb-2 flex items-baseline">
+                  <span className={`font-syne text-3xl md:text-4xl font-extrabold tracking-tight ${plan.pro ? 'text-white' : tk.text}`}>{plan.price}</span>
+                  <span className={`text-[11px] ml-1.5 ${plan.pro ? 'text-white/50' : dark ? 'text-[#3d4050]' : 'text-[#c4c7cc]'}`}>/ {plan.period}</span>
                 </div>
 
-                <p style={{ fontSize: 13, color: plan.pro ? 'rgba(255,255,255,0.65)' : tk.sub, marginBottom: 28, lineHeight: 1.6, fontWeight: 300 }}>{plan.desc}</p>
+                <p className={`text-[13px] leading-relaxed mb-7 font-light ${plan.pro ? 'text-white/70' : tk.sub}`}>{plan.desc}</p>
 
-                <div style={{ flex: 1, marginBottom: 28 }}>
+                <div className="grow flex flex-col gap-3 mb-8">
                   {plan.features.map(f => (
-                    <div key={f} className="check-item">
-                      <span className="check-icon" style={{ color: plan.pro ? 'rgba(255,255,255,0.7)' : tk.accent }}>✓</span>
-                      <span style={{ fontSize: 13, color: plan.pro ? 'rgba(255,255,255,0.75)' : tk.sub, fontWeight: 300 }}>{f}</span>
+                    <div key={f} className="flex items-center gap-2.5 text-[13px]">
+                      <span className={`shrink-0 text-xs ${plan.pro ? 'text-white/70' : 'text-blue-500'}`}>✓</span>
+                      <span className={`font-light ${plan.pro ? 'text-white/80' : tk.sub}`}>{f}</span>
                     </div>
                   ))}
                 </div>
 
                 <Link
                   to={plan.ctaLink}
-                  style={{
-                    display: 'block', textAlign: 'center',
-                    padding: '12px 0', borderRadius: 10,
-                    fontWeight: 600, fontSize: 13,
-                    letterSpacing: '0.05em', textDecoration: 'none',
-                    transition: 'all 0.2s',
-                    background: plan.pro ? '#fff' : tk.accent,
-                    color: plan.pro ? '#1d4ed8' : '#fff',
-                    fontFamily: "'DM Mono', monospace",
-                  }}
-                  onMouseEnter={e => e.target.style.opacity = '0.9'}
-                  onMouseLeave={e => e.target.style.opacity = '1'}
-                >{plan.cta}</Link>
+                  className={`block text-center py-3 rounded-xl text-xs font-semibold tracking-wider transition-all duration-200 hover:opacity-90 ${
+                    plan.pro ? 'bg-white text-blue-700' : 'bg-blue-500 text-white shadow-md shadow-blue-500/10'
+                  }`}
+                >
+                  {plan.cta}
+                </Link>
               </div>
             ))}
           </div>
 
-          <p style={{ textAlign: 'center', fontSize: 11, color: tk.muted, marginTop: 20, letterSpacing: '0.04em' }}>
+          <p className={`text-center text-[11px] mt-6 tracking-wide ${dark ? 'text-[#3d4050]' : 'text-[#c4c7cc]'}`}>
             * Pro payments via eSewa · Cancel anytime
           </p>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer style={{ borderTop: `1px solid ${tk.border}`, padding: '48px 24px', background: dark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.02)', position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 24, marginBottom: 36 }}>
+      <footer className={`border-t px-6 py-12 relative z-10 ${dark ? 'border-white/5 bg-black/40' : 'border-black/5 bg-black/[0.01]'}`}>
+        <div className="max-w-[1100px] mx-auto">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-9">
             <div>
-              <p style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 800, color: tk.text, letterSpacing: '-0.02em' }}>
-                Trans<span style={{ color: tk.accent }}>X</span>
+              <p className={`font-syne text-xl font-extrabold tracking-tight ${tk.text}`}>
+                Trans<span className="text-blue-500">X</span>
               </p>
-              <p style={{ fontSize: 12, color: tk.muted, marginTop: 4, letterSpacing: '0.04em' }}>Secure File Sharing for Modern Teams</p>
+              <p className={`text-xs mt-1 tracking-wide ${dark ? 'text-[#3d4050]' : 'text-[#c4c7cc]'}`}>Secure File Sharing for Modern Teams</p>
             </div>
 
-            <div style={{ display: 'flex', gap: 32 }}>
+            {/* Centered Desktop Nav Footer */}
+            <div className="hidden md:flex items-center gap-8">
               {['Features', 'How It Works', 'Pricing'].map(item => (
-                <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className="nav-link">{item}</a>
+                <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className={`text-xs tracking-wider uppercase font-medium ${dark ? 'text-gray-400 hover:text-blue-500' : 'text-gray-500 hover:text-blue-600'} transition-colors duration-200`}>
+                  {item}
+                </a>
               ))}
             </div>
 
-            <div style={{ display: 'flex', gap: 10 }}>
-              <Link to="/login" className="btn-ghost" style={{ color: tk.text, padding: '8px 18px', fontSize: 12 }}>Login</Link>
-              <Link to="/register" className="btn-primary" style={{ padding: '8px 18px', fontSize: 12, animation: 'none' }}>Get Started</Link>
+            <div className="flex items-center gap-2.5">
+              <Link to="/login" className={`text-xs tracking-wider uppercase font-medium px-4 py-2 rounded-lg border transition-all duration-200 ${dark ? 'border-white/5 text-gray-400 hover:text-white' : 'border-black/5 text-gray-500 hover:text-black'}`}>Login</Link>
+              <Link to="/register" className={`text-xs tracking-wider font-semibold px-4.5 py-2 rounded-lg transition-all duration-200 ${dark ? 'bg-[#eef0f5] text-[#08090d] hover:bg-white' : 'bg-[#0f1017] text-white hover:opacity-90'}`}>Get Started</Link>
             </div>
           </div>
 
-          <div className="glow-line" style={{ marginBottom: 24 }} />
+          {/* Dynamic Bottom Accent Line */}
+          <div className={`h-[1px] w-full bg-gradient-to-r from-transparent via-blue-500/20 to-transparent mb-6`} />
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-            <p style={{ fontSize: 11, color: tk.muted, letterSpacing: '0.04em' }}>© 2025 TransX. All rights reserved.</p>
-            <p style={{ fontSize: 11, color: tk.muted, letterSpacing: '0.04em' }}>Built with ♥ in Nepal</p>
+          <div className={`flex flex-col sm:flex-row justify-between items-center gap-3 text-[11px] tracking-wide ${dark ? 'text-[#3d4050]' : 'text-[#c4c7cc]'}`}>
+            <p>© 2026 TransX. All rights reserved.</p>
+            <p>Built with ♥ in Nepal</p>
           </div>
         </div>
       </footer>

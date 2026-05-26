@@ -78,24 +78,24 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-950">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-white">My Organizations</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">My Organizations</h2>
             <p className="text-gray-500 text-sm mt-1">Select an organization to manage files</p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => { setShowJoinModal(true); setModalError(''); }}
-              className="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition"
+              className="flex-1 sm:flex-none px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition"
             >
               Join Org
             </button>
             <button
               onClick={() => { setShowCreateModal(true); setModalError(''); }}
-              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+              className="flex-1 sm:flex-none px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
             >
               + Create Org
             </button>
@@ -119,12 +119,12 @@ const Dashboard = () => {
             <p className="text-gray-600 text-sm mt-1">Create or join one to get started</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {orgs.map((org) => (
               <div
                 key={org._id}
                 onClick={() => handleOrgClick(org)}
-                className={`relative bg-gray-900 border rounded-2xl p-6 cursor-pointer transition group
+                className={`relative bg-gray-900 border rounded-2xl p-5 sm:p-6 cursor-pointer transition group
                   ${org.unreadCount > 0
                     ? 'border-blue-500/60 shadow-lg shadow-blue-500/10'
                     : 'border-gray-800 hover:border-blue-500'
@@ -142,7 +142,7 @@ const Dashboard = () => {
                   🏢
                 </div>
 
-                <h3 className="text-white font-semibold text-lg group-hover:text-blue-400 transition">
+                <h3 className="text-white font-semibold text-base sm:text-lg group-hover:text-blue-400 transition">
                   {org.name}
                 </h3>
 
@@ -150,7 +150,7 @@ const Dashboard = () => {
                   Admin: {org.admin?.name}
                 </p>
 
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-4 flex items-center justify-between flex-wrap gap-2">
                   <span className="text-xs text-gray-600">
                     {org.members?.length} member{org.members?.length !== 1 ? 's' : ''}
                   </span>
@@ -174,7 +174,7 @@ const Dashboard = () => {
       {/* Create Org Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
-          <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div className="bg-gray-900 rounded-2xl p-5 sm:p-6 w-full max-w-md shadow-2xl">
             <h3 className="text-white font-semibold text-lg mb-4">Create Organization</h3>
             {modalError && (
               <div className="bg-red-500/10 border border-red-500 text-red-400 px-4 py-2 rounded-lg mb-4 text-sm">
@@ -204,7 +204,7 @@ const Dashboard = () => {
       {/* Join Org Modal */}
       {showJoinModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
-          <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div className="bg-gray-900 rounded-2xl p-5 sm:p-6 w-full max-w-md shadow-2xl">
             <h3 className="text-white font-semibold text-lg mb-4">Join Organization</h3>
             {modalError && (
               <div className="bg-red-500/10 border border-red-500 text-red-400 px-4 py-2 rounded-lg mb-4 text-sm">
