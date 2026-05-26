@@ -29,7 +29,7 @@ const SettingsTab = ({
   const [newOrgName, setNewOrgName] = useState(org?.name || "");
 
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="min-h-[calc(100vh-2rem)] flex flex-col justify-center space-y-4 max-w-3xl mx-auto w-full py-8">
 
       {/* ── Upload Access Toggle ── */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 sm:p-6">
