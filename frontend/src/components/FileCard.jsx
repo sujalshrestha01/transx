@@ -144,26 +144,28 @@ const FileCard = ({
   return (
     <>
       <div className="bg-gray-900 border border-gray-800 hover:border-gray-700 rounded-xl p-4 transition">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {/* File Info */}
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="text-2xl shrink-0">
+          <div className="flex items-start sm:items-center gap-3 min-w-0">
+            <div className="text-2xl shrink-0 mt-0.5 sm:mt-0">
               {getFileIcon(file.mimeType)}
             </div>
-            <div className="min-w-0">
-              <p className="text-white text-sm font-medium truncate">
-                {file.originalName}
-              </p>
-              {file.isRecovered && (
-                <span className="text-xs bg-green-600/20 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30 shrink-0">
-                  Restored : admin
-                </span>
-              )}
-              <p className="text-gray-500 text-xs mt-0.5">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-white text-sm font-medium truncate max-w-full">
+                  {file.originalName}
+                </p>
+                {file.isRecovered && (
+                  <span className="text-[10px] sm:text-xs bg-green-600/20 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30 shrink-0">
+                    Restored : admin
+                  </span>
+                )}
+              </div>
+              <p className="text-gray-500 text-xs mt-0.5 truncate">
                 {formatSize(file.size)} · Uploaded by {file.uploadedBy?.name}
               </p>
               {canEditAccess && (
-                <p className="text-gray-600 text-xs mt-0.5">
+                <p className="text-gray-600 text-xs mt-0.5 truncate">
                   {getAccessSummary()}
                 </p>
               )}
@@ -171,25 +173,25 @@ const FileCard = ({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 sm:shrink-0 w-full sm:w-auto justify-end">
             {canEditAccess && (
               <button
                 onClick={openAccessModal}
-                className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition"
+                className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition flex-1 sm:flex-none text-center"
               >
                 ✏️ Access
               </button>
             )}
             <button
               onClick={() => onDownload(file._id, file.originalName)}
-              className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+              className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex-1 sm:flex-none text-center"
             >
               Download
             </button>
             {canDelete && (
               <button
                 onClick={() => onDelete(file._id)}
-                className="px-3 py-1.5 text-xs bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg transition"
+                className="px-3 py-1.5 text-xs bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg transition flex-1 sm:flex-none text-center"
               >
                 Delete
               </button>
@@ -203,9 +205,9 @@ const FileCard = ({
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
           <div className="bg-gray-900 rounded-2xl w-full max-w-lg shadow-2xl border border-gray-800 flex flex-col max-h-[90vh]">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-800">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-800">
               <div>
-                <h3 className="text-white font-semibold text-lg">
+                <h3 className="text-white font-semibold text-base sm:text-lg">
                   Edit Access
                 </h3>
                 <p className="text-gray-500 text-xs mt-0.5">
@@ -221,11 +223,11 @@ const FileCard = ({
             </div>
 
             {/* File Preview */}
-            <div className="mx-6 mt-5 bg-gray-800 rounded-xl px-4 py-3 flex items-center gap-3 border border-gray-700">
+            <div className="mx-4 sm:mx-6 mt-4 sm:mt-5 bg-gray-800 rounded-xl px-4 py-3 flex items-center gap-3 border border-gray-700 min-w-0">
               <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center text-xl shrink-0">
                 {getFileIcon(file.mimeType)}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-white text-sm font-medium truncate">
                   {file.originalName}
                 </p>
@@ -233,8 +235,8 @@ const FileCard = ({
                   {formatSize(file.size)}
                 </p>
               </div>
-              <div className="ml-auto shrink-0">
-                <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded-full">
+              <div className="ml-auto shrink-0 pl-1">
+                <span className="text-[10px] sm:text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded-full whitespace-nowrap">
                   {totalSelected} recipient{totalSelected !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -242,13 +244,13 @@ const FileCard = ({
 
             {/* Error */}
             {accessError && (
-              <div className="mx-6 mt-3 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+              <div className="mx-4 sm:mx-6 mt-3 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
                 <span>⚠️</span> {accessError}
               </div>
             )}
 
             {/* Access Selector */}
-            <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
               <AccessSelector
                 categories={categories}
                 members={members}
@@ -262,23 +264,23 @@ const FileCard = ({
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-gray-800 flex items-center justify-between gap-4">
-              <p className="text-gray-500 text-xs">
+            <div className="px-4 sm:px-6 py-4 border-t border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <p className="text-gray-500 text-xs order-2 sm:order-1 text-center sm:text-left">
                 {totalSelected > 0
                   ? `${totalSelected} recipient${totalSelected !== 1 ? "s" : ""} will have access`
                   : "No recipients selected"}
               </p>
-              <div className="flex gap-3">
+              <div className="flex gap-3 order-1 sm:order-2 w-full sm:w-auto">
                 <button
                   onClick={() => setShowAccessModal(false)}
-                  className="px-4 py-2 text-sm text-gray-400 hover:text-white transition"
+                  className="px-4 py-2 text-sm text-gray-400 hover:text-white transition flex-1 sm:flex-none text-center"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveAccess}
                   disabled={saving}
-                  className="px-5 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition disabled:opacity-50 font-medium"
+                  className="px-5 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition disabled:opacity-50 font-medium flex-1 sm:flex-none text-center flex justify-center items-center"
                 >
                   {saving ? (
                     <span className="flex items-center gap-2">
